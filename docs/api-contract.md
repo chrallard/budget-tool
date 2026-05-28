@@ -171,6 +171,7 @@ export type ImportBatchTransaction = {
   displayDate: string;
   selectedCategory: string;
   editableAmount: number;
+  displayNameOverride?: string;
   notes?: string;
   sourceAccount: "chequing" | "credit_card";
   originalDate: string;
@@ -208,6 +209,7 @@ Response: `ApiResponse<PostImportBatchResponse>`
 - Reject empty `selectedCategory` for any submitted transaction.
 - Enforce `editableAmount` numeric and finite.
 - Enforce `importFingerprint` presence.
+- If `displayNameOverride` is provided, it must be a non-empty string after trimming.
 - Enforce `Entry Method = Importer` for all writes.
 - Populate metadata columns on write:
   - `Source Account`

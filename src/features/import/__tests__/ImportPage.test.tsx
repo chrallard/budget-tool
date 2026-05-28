@@ -227,12 +227,17 @@ describe("ImportPage", () => {
     ]);
     await user.upload(input, new File([csv], "submit.csv", { type: "text/csv" }));
 
+    const storeVendorInput = await screen.findByLabelText("Store / Vendor");
+    await user.clear(storeVendorInput);
+    await user.type(storeVendorInput, "Loblaws Rideau");
+
     await user.click(await screen.findByRole("button", { name: "Import anyway" }));
     await user.click(await screen.findByRole("button", { name: "Mark internal transfer" }));
     await user.click(await screen.findByRole("button", { name: /submit 1 approved transaction/i }));
 
     await waitFor(() => expect(submitImportBatch).toHaveBeenCalledTimes(1));
     expect(submitImportBatch.mock.calls[0]?.[0].approvedTransactions).toHaveLength(1);
+    expect(submitImportBatch.mock.calls[0]?.[0].approvedTransactions[0]?.displayNameOverride).toBe("Loblaws Rideau");
     expect(onImportSuccess).toHaveBeenCalledTimes(1);
     expect(await screen.findByText("Imported 1 transactions successfully.")).toBeInTheDocument();
   });

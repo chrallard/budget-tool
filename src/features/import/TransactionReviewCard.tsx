@@ -9,6 +9,7 @@ type TransactionReviewCardProps = {
   config: ReviewConfig;
   onCategoryChange: (category: string) => void;
   onAmountChange: (amount: number) => void;
+  onDisplayNameOverrideChange: (value: string) => void;
   onNotesChange: (notes: string) => void;
   onApprove: () => void;
   onSkip: () => void;
@@ -24,6 +25,7 @@ export function TransactionReviewCard({
   config,
   onCategoryChange,
   onAmountChange,
+  onDisplayNameOverrideChange,
   onNotesChange,
   onApprove,
   onSkip,
@@ -31,13 +33,21 @@ export function TransactionReviewCard({
 }: Readonly<TransactionReviewCardProps>) {
   const categories = getAllowedCategories(transaction.direction, config);
   const approvalBlocked = !canApproveTransaction(transaction, config);
+  const nameFieldLabel = transaction.direction === "expense" ? "Store / Vendor" : "Source";
+  const displayName = transaction.displayNameOverride?.trim()
+    ? transaction.displayNameOverride.trim()
+    : transaction.originalDescription;
+  const hasDisplayNameOverride = displayName !== transaction.originalDescription;
 
   return (
     <article className="transaction-card" aria-label="Pending transaction review">
       <header className="transaction-card__header">
         <div>
           <p className="dashboard-eyebrow">{formatDirection(transaction.direction)}</p>
-          <h2>{transaction.originalDescription}</h2>
+          <h2>{displayName}</h2>
+          {hasDisplayNameOverride ? (
+            <p className="dashboard-muted">Original: {transaction.originalDescription}</p>
+          ) : null}
         </div>
         <div className="transaction-card__amounts">
           <strong>${transaction.editableAmount.toFixed(2)}</strong>
@@ -69,6 +79,17 @@ export function TransactionReviewCard({
             step="0.01"
             value={Number.isFinite(transaction.editableAmount) ? String(transaction.editableAmount) : ""}
             onChange={(event) => onAmountChange(event.currentTarget.valueAsNumber)}
+          />
+        </label>
+
+        <label className="review-field review-field--full">
+          <span>{nameFieldLabel}</span>
+          <input
+            aria-label={nameFieldLabel}
+            type="text"
+            value={transaction.displayNameOverride ?? ""}
+            placeholder={transaction.originalDescription}
+            onChange={(event) => onDisplayNameOverrideChange(event.currentTarget.value)}
           />
         </label>
 

@@ -118,6 +118,14 @@ function validateSingleImportTransaction_(tx, expenseSet, incomeSet) {
     errors.push("normalizedDescription is required");
   }
 
+  if (tx.displayNameOverride !== undefined && tx.displayNameOverride !== null) {
+    if (typeof tx.displayNameOverride !== "string") {
+      errors.push("displayNameOverride must be a string when provided");
+    } else if (String(tx.displayNameOverride).trim() === "") {
+      errors.push("displayNameOverride must not be blank when provided");
+    }
+  }
+
   return errors;
 }
 

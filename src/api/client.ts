@@ -55,6 +55,7 @@ export type ImportBatchTransaction = {
   displayDate: string;
   selectedCategory: string;
   editableAmount: number;
+  displayNameOverride?: string;
   notes?: string;
   sourceAccount: "chequing" | "credit_card";
   originalDate: string;

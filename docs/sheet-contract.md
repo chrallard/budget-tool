@@ -69,7 +69,7 @@ Rules:
 ### Expense write mapping
 
 - `Date` <- `displayDate`
-- `Store / Vendor` <- display vendor from transaction description normalization result
+- `Store / Vendor` <- `displayNameOverride` when provided; otherwise normalized description fallback
 - `$ Amount` <- `editableAmount` (refunds allowed as negative)
 - `Expense Category` <- `selectedCategory`
 - `Notes` <- `notes` (or empty string)
@@ -84,7 +84,7 @@ Rules:
 ### Income write mapping
 
 - `Date` <- `displayDate`
-- `Source` <- display source from transaction description normalization result
+- `Source` <- `displayNameOverride` when provided; otherwise normalized description fallback
 - `$ Amount` <- `editableAmount`
 - `Income Category` <- `selectedCategory`
 - `Notes` <- `notes` (or empty string)

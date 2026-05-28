@@ -47,12 +47,39 @@ function normalizeDashboardData(config: GetConfigResponse, dashboard: GetDashboa
 }
 
 export class AppsScriptDashboardDataSource implements DashboardDataSource {
+  private static cachedConfig: GetConfigResponse | null = null;
+  private static inFlightConfig: Promise<GetConfigResponse> | null = null;
+  private static readonly inFlightDashboardByMonth = new Map<string, Promise<DashboardData>>();
+
   constructor(private readonly client: AppsScriptApiClient) { }
 
-  async getDashboardData(month: string): Promise<DashboardData> {
+  private async getConfigCached(): Promise<GetConfigResponse> {
+    if (AppsScriptDashboardDataSource.cachedConfig) {
+      return AppsScriptDashboardDataSource.cachedConfig;
+    }
+
+    if (AppsScriptDashboardDataSource.inFlightConfig) {
+      return AppsScriptDashboardDataSource.inFlightConfig;
+    }
+
+    const configRequest = this.client
+      .getConfig()
+      .then((config) => {
+        AppsScriptDashboardDataSource.cachedConfig = config;
+        return config;
+      })
+      .finally(() => {
+        AppsScriptDashboardDataSource.inFlightConfig = null;
+      });
+
+    AppsScriptDashboardDataSource.inFlightConfig = configRequest;
+    return configRequest;
+  }
+
+  private async loadDashboardData(month: string): Promise<DashboardData> {
     let config: GetConfigResponse;
     try {
-      config = await this.client.getConfig();
+      config = await this.getConfigCached();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       throw new Error(`Unable to load categories and budget targets from config: ${message}`);
@@ -75,6 +102,20 @@ export class AppsScriptDashboardDataSource implements DashboardDataSource {
     }
 
     return normalizeDashboardData(config, dashboard);
+  }
+
+  async getDashboardData(month: string): Promise<DashboardData> {
+    const existingRequest = AppsScriptDashboardDataSource.inFlightDashboardByMonth.get(month);
+    if (existingRequest) {
+      return existingRequest;
+    }
+
+    const request = this.loadDashboardData(month).finally(() => {
+      AppsScriptDashboardDataSource.inFlightDashboardByMonth.delete(month);
+    });
+
+    AppsScriptDashboardDataSource.inFlightDashboardByMonth.set(month, request);
+    return request;
   }
 }
 

@@ -177,6 +177,18 @@ export function setTransactionAmount(
   }));
 }
 
+export function setTransactionDisplayNameOverride(
+  state: ImportReviewState,
+  transactionId: string,
+  displayNameOverride: string,
+): ImportReviewState {
+  return updateTransaction(state, transactionId, (transaction) => ({
+    ...transaction,
+    displayNameOverride,
+    status: transaction.status === "approved" ? "pending" : transaction.status,
+  }));
+}
+
 export function reopenTransaction(
   state: ImportReviewState,
   transactionId: string,
@@ -259,6 +271,9 @@ export function buildApprovedImportBatch(
       displayDate: transaction.displayDate,
       selectedCategory: transaction.selectedCategory ?? "",
       editableAmount: transaction.editableAmount,
+      displayNameOverride: transaction.displayNameOverride?.trim()
+        ? transaction.displayNameOverride.trim()
+        : undefined,
       notes: transaction.notes?.trim() ? transaction.notes.trim() : undefined,
       sourceAccount: transaction.sourceAccount,
       originalDate: transaction.originalDate,

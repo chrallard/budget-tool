@@ -50,7 +50,9 @@ function handleImportBatchAction_(e, requestId) {
 }
 
 function writeApprovedTransaction_(tx, expensesSheet, incomeSheet, expensesHeaders, incomeHeaders, nowIso) {
-  var displayText = String(tx.normalizedDescription || tx.originalDescription || "").trim();
+  var displayText = String(
+    tx.displayNameOverride || tx.normalizedDescription || tx.originalDescription || ""
+  ).trim();
   var common = {
     Date: normalizeToMmDdYyyy_(tx.displayDate),
     "$ Amount": Number(tx.editableAmount),

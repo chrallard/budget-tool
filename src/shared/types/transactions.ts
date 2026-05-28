@@ -33,6 +33,7 @@ export type NormalizedTransaction = {
   displayDate: string;
   originalDescription: string;
   normalizedDescription: string;
+  displayNameOverride?: string;
   originalAmount: number;
   editableAmount: number;
   direction: TransactionDirection;

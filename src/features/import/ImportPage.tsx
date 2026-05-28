@@ -22,6 +22,7 @@ import {
   reopenTransaction,
   setTransactionAmount,
   setTransactionCategory,
+  setTransactionDisplayNameOverride,
   setTransactionNotes,
   skipTransaction,
   startSubmission,
@@ -235,6 +236,11 @@ export function ImportPage({
               }
               onAmountChange={(amount) =>
                 setReviewState((state) => (state ? setTransactionAmount(state, currentTransaction.id, amount) : state))
+              }
+              onDisplayNameOverrideChange={(value) =>
+                setReviewState((state) =>
+                  state ? setTransactionDisplayNameOverride(state, currentTransaction.id, value) : state,
+                )
               }
               onNotesChange={(notes) =>
                 setReviewState((state) => (state ? setTransactionNotes(state, currentTransaction.id, notes) : state))

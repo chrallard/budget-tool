@@ -12,6 +12,7 @@ import {
   reopenTransaction,
   setTransactionAmount,
   setTransactionCategory,
+  setTransactionDisplayNameOverride,
   setTransactionNotes,
   skipTransaction,
   startSubmission,
@@ -25,6 +26,7 @@ function createTransaction(overrides: Partial<NormalizedTransaction> = {}): Norm
     displayDate: overrides.displayDate ?? "05-01-2026",
     originalDescription: overrides.originalDescription ?? "Coffee Shop",
     normalizedDescription: overrides.normalizedDescription ?? "COFFEE SHOP",
+    displayNameOverride: overrides.displayNameOverride,
     originalAmount: overrides.originalAmount ?? -14.25,
     editableAmount: overrides.editableAmount ?? 14.25,
     direction: overrides.direction ?? "expense",
@@ -98,6 +100,22 @@ describe("reviewState", () => {
     expect(updated.transactions[0]?.originalAmount).toBe(-14.25);
   });
 
+  it("tracks display name override and reopens approved transaction", () => {
+    const initial = createImportReviewState({
+      sourceAccount: "chequing",
+      fileName: "rbc.csv",
+      config: {
+        expenseCategories: ["Dining"],
+        incomeCategories: ["Salary"],
+      },
+      transactions: [createTransaction({ selectedCategory: "Dining", status: "approved" })],
+    });
+
+    const withOverride = setTransactionDisplayNameOverride(initial, "tx-1", "Cafe Example");
+    expect(withOverride.transactions[0]?.displayNameOverride).toBe("Cafe Example");
+    expect(withOverride.transactions[0]?.status).toBe("pending");
+  });
+
   it("tracks notes, skipped, and ignored transitions in queue order", () => {
     const initial = createImportReviewState({
       sourceAccount: "chequing",
@@ -149,7 +167,13 @@ describe("reviewState", () => {
         incomeCategories: ["Salary"],
       },
       transactions: [
-        createTransaction({ id: "approved", selectedCategory: "Dining", status: "approved", notes: " keep me " }),
+        createTransaction({
+          id: "approved",
+          selectedCategory: "Dining",
+          status: "approved",
+          displayNameOverride: " Coffee Bar ",
+          notes: " keep me ",
+        }),
         createTransaction({ id: "skipped", selectedCategory: "Dining", status: "skipped" }),
         createTransaction({ id: "ignored", selectedCategory: "Dining", status: "ignored" }),
       ],
@@ -162,6 +186,7 @@ describe("reviewState", () => {
     expect(payload.approvedTransactions[0]).toMatchObject({
       id: "approved",
       selectedCategory: "Dining",
+      displayNameOverride: "Coffee Bar",
       notes: "keep me",
     });
   });
