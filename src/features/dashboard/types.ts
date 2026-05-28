@@ -22,6 +22,7 @@ export type IncomeRow = {
 
 export type DashboardData = {
   month: string;
+  availableMonths?: string[];
   expenseCategories: string[];
   budgetTargets: BudgetTarget[];
   expenses: ExpenseRow[];
@@ -41,5 +42,5 @@ export type DashboardSummary = {
   month: string;
   totalSpending: number;
   totalIncome: number;
-  totalRemainingExpenseBudget?: number;
+  profit: number;
 };

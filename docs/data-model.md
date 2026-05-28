@@ -129,7 +129,7 @@ export type DashboardSummary = {
   month: string; // YYYY-MM
   totalSpending: number;
   totalIncome: number;
-  totalRemainingExpenseBudget?: number;
+  profit: number;
 };
 ```
 

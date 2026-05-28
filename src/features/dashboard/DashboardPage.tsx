@@ -66,6 +66,10 @@ export function DashboardPage({ dataSource }: Readonly<DashboardPageProps>) {
       return [selectedMonth];
     }
 
+    if (dashboardData.availableMonths && dashboardData.availableMonths.length > 0) {
+      return dashboardData.availableMonths;
+    }
+
     return collectAvailableMonths(dashboardData.expenses, dashboardData.income, selectedMonth);
   }, [dashboardData, selectedMonth]);
 

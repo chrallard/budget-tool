@@ -68,6 +68,6 @@ describe("dashboard calculations", () => {
 
     expect(summary.totalSpending).toBe(1930);
     expect(summary.totalIncome).toBe(3200);
-    expect(summary.totalRemainingExpenseBudget).toBe(370);
+    expect(summary.profit).toBe(1270);
   });
 });

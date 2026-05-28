@@ -17,12 +17,8 @@ export function SummaryCards({ summary }: Readonly<SummaryCardsProps>) {
         <p>{formatCurrency(summary.totalIncome)}</p>
       </article>
       <article className="summary-card">
-        <h2>Remaining Expense Budget</h2>
-        <p>
-          {summary.totalRemainingExpenseBudget === undefined
-            ? "No expense targets"
-            : formatCurrency(summary.totalRemainingExpenseBudget)}
-        </p>
+        <h2>Profit</h2>
+        <p>{formatCurrency(summary.profit)}</p>
       </article>
     </section>
   );

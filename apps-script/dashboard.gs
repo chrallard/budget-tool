@@ -29,11 +29,13 @@ function handleDashboardAction_(e) {
 
   var expenses = readDashboardRows_(APP_CONFIG.SHEETS.EXPENSES, APP_CONFIG.HEADERS.EXPENSES_VISIBLE, "expense", month);
   var income = readDashboardRows_(APP_CONFIG.SHEETS.INCOME, APP_CONFIG.HEADERS.INCOME_VISIBLE, "income", month);
+  var availableMonths = collectDashboardAvailableMonths_();
 
   var response = {
     month: month,
     expenseRows: expenses,
     incomeRows: income,
+    availableMonths: availableMonths,
     budgetTargets: budgetTargets,
     expenseCategories: categories.expenseCategories
   };
@@ -93,6 +95,55 @@ function readDashboardRows_(sheetName, requiredHeaders, kind, month) {
   }
 
   return results;
+}
+
+function collectDashboardAvailableMonths_() {
+  var months = {};
+
+  collectAvailableMonthsFromSheet_(
+    APP_CONFIG.SHEETS.EXPENSES,
+    APP_CONFIG.HEADERS.EXPENSES_VISIBLE,
+    months
+  );
+  collectAvailableMonthsFromSheet_(
+    APP_CONFIG.SHEETS.INCOME,
+    APP_CONFIG.HEADERS.INCOME_VISIBLE,
+    months
+  );
+
+  return Object.keys(months).sort(function (a, b) {
+    if (a === b) {
+      return 0;
+    }
+
+    return a > b ? -1 : 1;
+  });
+}
+
+function collectAvailableMonthsFromSheet_(sheetName, requiredHeaders, months) {
+  var sheet = getSheetOrThrow_(sheetName);
+  var headerMap = getOrCreateHeaderMap_(sheet, requiredHeaders);
+  var rows = getSheetDataRows_(sheet, headerMap);
+
+  for (var i = 0; i < rows.length; i += 1) {
+    var row = rows[i];
+    var dateText = normalizeToMmDdYyyy_(row[headerMap["Date"] - 1]);
+    if (!dateText) {
+      continue;
+    }
+
+    var amount = toNullableNumber_(row[headerMap["$ Amount"] - 1]);
+    if (amount === null) {
+      continue;
+    }
+
+    var rowMonth = monthFromMmDdYyyy_(dateText);
+    if (!rowMonth) {
+      continue;
+    }
+
+    months[rowMonth] = true;
+  }
 }
 
 function buildDashboardDebugPayload_(month) {

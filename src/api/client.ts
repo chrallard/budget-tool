@@ -103,6 +103,7 @@ export type DashboardIncomeRow = {
 
 export type GetDashboardResponse = {
   month: string;
+  availableMonths?: string[];
   expenseRows?: DashboardExpenseRow[];
   incomeRows?: DashboardIncomeRow[];
   expenses?: DashboardExpenseRow[];

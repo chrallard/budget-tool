@@ -4,6 +4,7 @@ import {
   type GetConfigResponse,
   type GetDashboardResponse,
 } from "../../api/client";
+import { collectAvailableMonths } from "./dashboardCalculations";
 import { mockDashboardData } from "./mockDashboardData";
 import type { BudgetTarget, DashboardData } from "./types";
 
@@ -29,12 +30,19 @@ function toBudgetTargets(targets: ApiBudgetTarget[]): BudgetTarget[] {
 }
 
 function normalizeDashboardData(config: GetConfigResponse, dashboard: GetDashboardResponse): DashboardData {
+  const expenses = dashboard.expenseRows ?? dashboard.expenses ?? [];
+  const income = dashboard.incomeRows ?? dashboard.income ?? [];
+
   return {
     month: dashboard.month,
+    availableMonths:
+      dashboard.availableMonths && dashboard.availableMonths.length > 0
+        ? dashboard.availableMonths
+        : collectAvailableMonths(expenses, income, dashboard.month),
     expenseCategories: config.expenseCategories,
     budgetTargets: toBudgetTargets(config.budgetTargets.length ? config.budgetTargets : dashboard.budgetTargets),
-    expenses: dashboard.expenseRows ?? dashboard.expenses ?? [],
-    income: dashboard.incomeRows ?? dashboard.income ?? [],
+    expenses,
+    income,
   };
 }
 

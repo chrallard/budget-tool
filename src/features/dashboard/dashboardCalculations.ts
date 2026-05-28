@@ -82,17 +82,13 @@ export function calculateDashboardSummary(
 ): DashboardSummary {
   const totalSpending = filterExpensesByMonth(expenses, month).reduce((sum, row) => sum + row.amount, 0);
   const totalIncome = filterIncomeByMonth(income, month).reduce((sum, row) => sum + row.amount, 0);
-
-  const hasAnyTargets = cards.some((card) => card.budgetTarget !== undefined);
-  const totalRemainingExpenseBudget = hasAnyTargets
-    ? cards.reduce((sum, card) => sum + (card.remaining ?? 0), 0)
-    : undefined;
+  const profit = totalIncome - totalSpending;
 
   return {
     month,
     totalSpending,
     totalIncome,
-    totalRemainingExpenseBudget,
+    profit,
   };
 }
 
