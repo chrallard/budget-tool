@@ -19,11 +19,23 @@ function getOrCreateHeaderMap_(sheet, requiredVisibleHeaders) {
   var lastCol = Math.max(1, sheet.getLastColumn());
   var headerValues = sheet.getRange(headerRow, 1, 1, lastCol).getValues()[0];
   var headerMap = {};
+  var rawHeaderMap = {};
 
   for (var i = 0; i < headerValues.length; i += 1) {
     var header = String(headerValues[i] || "").trim();
     if (header) {
+      rawHeaderMap[header] = i + 1;
       headerMap[header] = i + 1;
+    }
+  }
+
+  for (var r = 0; r < requiredVisibleHeaders.length; r += 1) {
+    var requiredVisible = requiredVisibleHeaders[r];
+    if (!headerMap[requiredVisible]) {
+      var aliasCol = findHeaderAliasColumn_(requiredVisible, rawHeaderMap);
+      if (aliasCol) {
+        headerMap[requiredVisible] = aliasCol;
+      }
     }
   }
 
@@ -40,6 +52,23 @@ function getOrCreateHeaderMap_(sheet, requiredVisibleHeaders) {
   headerMap.__headerRow = headerRow;
 
   return headerMap;
+}
+
+function findHeaderAliasColumn_(requiredHeader, rawHeaderMap) {
+  var aliasesByHeader = {
+    Date: ["Date (MM-DD-YYYY)", "Date (MM/DD/YYYY)"],
+    Notes: ["Notes (Optional)", "Note"]
+  };
+
+  var aliases = aliasesByHeader[requiredHeader] || [];
+  for (var i = 0; i < aliases.length; i += 1) {
+    var alias = aliases[i];
+    if (rawHeaderMap[alias]) {
+      return rawHeaderMap[alias];
+    }
+  }
+
+  return null;
 }
 
 function findHeaderRow_(sheet, requiredVisibleHeaders) {
@@ -266,7 +295,22 @@ function toNullableNumber_(value) {
     return null;
   }
 
-  var numeric = typeof value === "number" ? value : Number(String(value).replace(/,/g, ""));
+  var numeric;
+  if (typeof value === "number") {
+    numeric = value;
+  } else {
+    var normalized = String(value)
+      .replace(/\s+/g, "")
+      .replace(/\$/g, "")
+      .replace(/,/g, "");
+
+    if (/^\(.*\)$/.test(normalized)) {
+      normalized = "-" + normalized.slice(1, -1);
+    }
+
+    numeric = Number(normalized);
+  }
+
   if (!isFinite(numeric)) {
     return null;
   }
