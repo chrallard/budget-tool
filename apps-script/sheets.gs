@@ -15,8 +15,9 @@ function getSheetOrThrow_(sheetName) {
 }
 
 function getOrCreateHeaderMap_(sheet, requiredVisibleHeaders) {
+  var headerRow = findHeaderRow_(sheet, requiredVisibleHeaders);
   var lastCol = Math.max(1, sheet.getLastColumn());
-  var headerValues = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var headerValues = sheet.getRange(headerRow, 1, 1, lastCol).getValues()[0];
   var headerMap = {};
 
   for (var i = 0; i < headerValues.length; i += 1) {
@@ -31,12 +32,53 @@ function getOrCreateHeaderMap_(sheet, requiredVisibleHeaders) {
     var required = requiredAllHeaders[j];
     if (!headerMap[required]) {
       var appendCol = sheet.getLastColumn() + 1;
-      sheet.getRange(1, appendCol).setValue(required);
+      sheet.getRange(headerRow, appendCol).setValue(required);
       headerMap[required] = appendCol;
     }
   }
 
+  headerMap.__headerRow = headerRow;
+
   return headerMap;
+}
+
+function findHeaderRow_(sheet, requiredVisibleHeaders) {
+  var lastRow = Math.max(1, sheet.getLastRow());
+  var lastCol = Math.max(1, sheet.getLastColumn());
+  var maxScanRows = Math.min(lastRow, 30);
+
+  var bestRow = 1;
+  var bestScore = -1;
+
+  for (var rowIndex = 1; rowIndex <= maxScanRows; rowIndex += 1) {
+    var rowValues = sheet.getRange(rowIndex, 1, 1, lastCol).getValues()[0];
+    var present = {};
+
+    for (var c = 0; c < rowValues.length; c += 1) {
+      var header = String(rowValues[c] || "").trim();
+      if (header) {
+        present[header] = true;
+      }
+    }
+
+    var score = 0;
+    for (var i = 0; i < requiredVisibleHeaders.length; i += 1) {
+      if (present[requiredVisibleHeaders[i]]) {
+        score += 1;
+      }
+    }
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestRow = rowIndex;
+
+      if (score === requiredVisibleHeaders.length) {
+        break;
+      }
+    }
+  }
+
+  return bestRow;
 }
 
 function ensureMetadataHeadersAndHide_(sheet, requiredVisibleHeaders) {
@@ -61,12 +103,13 @@ function backfillBlankEntryMethodToManual_(sheet, requiredVisibleHeaders) {
   }
 
   var lastRow = sheet.getLastRow();
+  var dataStartRow = Number(headerMap.__headerRow || 1) + 1;
   var lastCol = Math.max(sheet.getLastColumn(), entryCol);
-  if (lastRow < 2) {
+  if (lastRow < dataStartRow) {
     return;
   }
 
-  var dataRange = sheet.getRange(2, 1, lastRow - 1, lastCol);
+  var dataRange = sheet.getRange(dataStartRow, 1, lastRow - dataStartRow + 1, lastCol);
   var values = dataRange.getValues();
   var updated = false;
 
@@ -173,12 +216,13 @@ function readBudgetTargets_() {
 
 function getSheetDataRows_(sheet, headerMap) {
   var lastRow = sheet.getLastRow();
-  if (lastRow < 2) {
+  var dataStartRow = Number((headerMap && headerMap.__headerRow) || 1) + 1;
+  if (lastRow < dataStartRow) {
     return [];
   }
 
   var lastCol = sheet.getLastColumn();
-  var data = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+  var data = sheet.getRange(dataStartRow, 1, lastRow - dataStartRow + 1, lastCol).getValues();
   return data;
 }
 

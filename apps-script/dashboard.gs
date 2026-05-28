@@ -104,6 +104,7 @@ function readFingerprintRowsForSheet_(sheetName, requiredHeaders, outputName) {
   var sheet = getSheetOrThrow_(sheetName);
   var headerMap = getOrCreateHeaderMap_(sheet, requiredHeaders);
   var rows = getSheetDataRows_(sheet, headerMap);
+  var dataStartRow = Number(headerMap.__headerRow || 1) + 1;
   var results = [];
 
   for (var i = 0; i < rows.length; i += 1) {
@@ -123,7 +124,7 @@ function readFingerprintRowsForSheet_(sheetName, requiredHeaders, outputName) {
     var vendorOrSourceHeader = outputName === "Expenses" ? "Store / Vendor" : "Source";
     results.push({
       sheetName: outputName,
-      rowNumber: i + 2,
+      rowNumber: dataStartRow + i,
       date: normalizeToMmDdYyyy_(row[headerMap["Date"] - 1]),
       vendorOrSource: String(row[headerMap[vendorOrSourceHeader] - 1] || "").trim(),
       amount: amount,
