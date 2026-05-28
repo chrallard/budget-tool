@@ -70,4 +70,24 @@ describe("dashboard calculations", () => {
     expect(summary.totalIncome).toBe(3200);
     expect(summary.profit).toBe(1270);
   });
+
+  it("orders preferred categories first and keeps remaining categories in original order", () => {
+    const cards = calculateCategoryCards(
+      ["Pets", "Entertainment", "Food", "Gas", "Other", "Savings", "Donations", "Coffee out"],
+      budgetTargets,
+      expenses,
+      "2026-05",
+    );
+
+    expect(cards.map((card) => card.category)).toEqual([
+      "Other",
+      "Food",
+      "Coffee out",
+      "Gas",
+      "Entertainment",
+      "Donations",
+      "Pets",
+      "Savings",
+    ]);
+  });
 });

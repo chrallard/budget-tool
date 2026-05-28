@@ -6,6 +6,53 @@ import type {
   IncomeRow,
 } from "./types";
 
+const PREFERRED_CATEGORY_ORDER: readonly string[] = [
+  "Other",
+  "Food out",
+  "Food",
+  "Coffee out",
+  "Coffee in",
+  "Gas",
+  "Home",
+  "Entertainment",
+  "Gifts",
+  "Clothing",
+  "Donations",
+];
+
+function sortCategoriesForDashboard(expenseCategories: string[]): string[] {
+  const priorityByCategory = new Map<string, number>();
+  for (let i = 0; i < PREFERRED_CATEGORY_ORDER.length; i += 1) {
+    priorityByCategory.set(PREFERRED_CATEGORY_ORDER[i], i);
+  }
+
+  return expenseCategories
+    .map((category, index) => ({
+      category,
+      index,
+      priority: priorityByCategory.get(category),
+    }))
+    .sort((a, b) => {
+      const aHasPriority = a.priority !== undefined;
+      const bHasPriority = b.priority !== undefined;
+
+      if (aHasPriority && bHasPriority) {
+        return (a.priority as number) - (b.priority as number);
+      }
+
+      if (aHasPriority) {
+        return -1;
+      }
+
+      if (bHasPriority) {
+        return 1;
+      }
+
+      return a.index - b.index;
+    })
+    .map((item) => item.category);
+}
+
 export function getCurrentMonth(now: Date = new Date()): string {
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -51,8 +98,9 @@ export function calculateCategoryCards(
   month: string,
 ): CategoryCardData[] {
   const monthExpenses = filterExpensesByMonth(expenses, month);
+  const orderedCategories = sortCategoriesForDashboard(expenseCategories);
 
-  return expenseCategories.map((category) => {
+  return orderedCategories.map((category) => {
     const used = monthExpenses
       .filter((row) => row.category === category)
       .reduce((sum, row) => sum + row.amount, 0);
