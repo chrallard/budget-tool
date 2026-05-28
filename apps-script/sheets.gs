@@ -15,7 +15,7 @@ function getSheetOrThrow_(sheetName) {
 }
 
 function getOrCreateHeaderMap_(sheet, requiredVisibleHeaders) {
-  var headerRow = findHeaderRow_(sheet, requiredVisibleHeaders);
+  var headerRow = resolveHeaderRow_(sheet, requiredVisibleHeaders);
   var lastCol = Math.max(1, sheet.getLastColumn());
   var headerValues = sheet.getRange(headerRow, 1, 1, lastCol).getValues()[0];
   var headerMap = {};
@@ -54,13 +54,20 @@ function getOrCreateHeaderMap_(sheet, requiredVisibleHeaders) {
   return headerMap;
 }
 
-function findHeaderAliasColumn_(requiredHeader, rawHeaderMap) {
-  var aliasesByHeader = {
-    Date: ["Date (MM-DD-YYYY)", "Date (MM/DD/YYYY)"],
-    Notes: ["Notes (Optional)", "Note"]
-  };
+function resolveHeaderRow_(sheet, requiredVisibleHeaders) {
+  var sheetName = String(sheet.getName() || "").trim();
+  var configuredRows = APP_CONFIG.SHEET_HEADER_ROWS || {};
+  var configuredHeaderRow = Number(configuredRows[sheetName]);
 
-  var aliases = aliasesByHeader[requiredHeader] || [];
+  if (configuredHeaderRow > 0) {
+    return configuredHeaderRow;
+  }
+
+  return findHeaderRow_(sheet, requiredVisibleHeaders);
+}
+
+function findHeaderAliasColumn_(requiredHeader, rawHeaderMap) {
+  var aliases = getHeaderAliasesFor_(requiredHeader);
   for (var i = 0; i < aliases.length; i += 1) {
     var alias = aliases[i];
     if (rawHeaderMap[alias]) {
@@ -71,39 +78,112 @@ function findHeaderAliasColumn_(requiredHeader, rawHeaderMap) {
   return null;
 }
 
+function getHeaderAliasesFor_(requiredHeader) {
+  var aliasesByHeader = {
+    Date: ["Date (MM-DD-YYYY)", "Date (MM/DD/YYYY)"],
+    Notes: ["Notes (Optional)", "Note"]
+  };
+
+  return aliasesByHeader[requiredHeader] || [];
+}
+
+function resolveRequiredHeaderColumn_(requiredHeader, rawHeaderMap) {
+  if (rawHeaderMap[requiredHeader]) {
+    return rawHeaderMap[requiredHeader];
+  }
+
+  return findHeaderAliasColumn_(requiredHeader, rawHeaderMap);
+}
+
+function estimateDataDensityForHeaderRow_(sheet, headerRow, requiredColumnMap) {
+  var requiredCols = [];
+  var seen = {};
+  var keys = Object.keys(requiredColumnMap);
+
+  for (var i = 0; i < keys.length; i += 1) {
+    var col = requiredColumnMap[keys[i]];
+    if (col && !seen[col]) {
+      seen[col] = true;
+      requiredCols.push(col);
+    }
+  }
+
+  if (requiredCols.length === 0) {
+    return 0;
+  }
+
+  var lastRow = sheet.getLastRow();
+  var startRow = headerRow + 1;
+  if (lastRow < startRow) {
+    return 0;
+  }
+
+  var scanRows = Math.min(40, lastRow - startRow + 1);
+  var maxCol = sheet.getLastColumn();
+  var windowValues = sheet.getRange(startRow, 1, scanRows, maxCol).getValues();
+  var populatedRows = 0;
+
+  for (var r = 0; r < windowValues.length; r += 1) {
+    var row = windowValues[r];
+    var nonEmptyCount = 0;
+
+    for (var c = 0; c < requiredCols.length; c += 1) {
+      var value = row[requiredCols[c] - 1];
+      if (String(value || "").trim() !== "") {
+        nonEmptyCount += 1;
+      }
+    }
+
+    if (nonEmptyCount >= 2) {
+      populatedRows += 1;
+    }
+  }
+
+  return populatedRows;
+}
+
 function findHeaderRow_(sheet, requiredVisibleHeaders) {
   var lastRow = Math.max(1, sheet.getLastRow());
   var lastCol = Math.max(1, sheet.getLastColumn());
   var maxScanRows = Math.min(lastRow, 30);
 
   var bestRow = 1;
-  var bestScore = -1;
+  var bestHeaderMatches = -1;
+  var bestDataDensity = -1;
 
   for (var rowIndex = 1; rowIndex <= maxScanRows; rowIndex += 1) {
     var rowValues = sheet.getRange(rowIndex, 1, 1, lastCol).getValues()[0];
-    var present = {};
+    var rawHeaderMap = {};
 
     for (var c = 0; c < rowValues.length; c += 1) {
       var header = String(rowValues[c] || "").trim();
       if (header) {
-        present[header] = true;
+        rawHeaderMap[header] = c + 1;
       }
     }
 
-    var score = 0;
+    var headerMatches = 0;
+    var requiredColumnMap = {};
+
     for (var i = 0; i < requiredVisibleHeaders.length; i += 1) {
-      if (present[requiredVisibleHeaders[i]]) {
-        score += 1;
+      var required = requiredVisibleHeaders[i];
+      var col = resolveRequiredHeaderColumn_(required, rawHeaderMap);
+      if (col) {
+        headerMatches += 1;
+        requiredColumnMap[required] = col;
       }
     }
 
-    if (score > bestScore) {
-      bestScore = score;
-      bestRow = rowIndex;
+    var dataDensity = estimateDataDensityForHeaderRow_(sheet, rowIndex, requiredColumnMap);
 
-      if (score === requiredVisibleHeaders.length) {
-        break;
-      }
+    if (
+      headerMatches > bestHeaderMatches ||
+      (headerMatches === bestHeaderMatches && dataDensity > bestDataDensity) ||
+      (headerMatches === bestHeaderMatches && dataDensity === bestDataDensity && rowIndex > bestRow)
+    ) {
+      bestHeaderMatches = headerMatches;
+      bestDataDensity = dataDensity;
+      bestRow = rowIndex;
     }
   }
 

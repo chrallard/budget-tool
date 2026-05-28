@@ -11,6 +11,10 @@ var APP_CONFIG = {
     INCOME: "Income",
     BUDGET_TARGETS: "Budget Targets"
   },
+  SHEET_HEADER_ROWS: {
+    Expenses: 7,
+    Income: 7
+  },
   RANGES: {
     EXPENSE_CATEGORIES: "B3:B82",
     INCOME_CATEGORIES: "B85:B164"
