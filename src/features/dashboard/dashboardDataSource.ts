@@ -1,0 +1,93 @@
+import {
+  AppsScriptApiClient,
+  type ApiBudgetTarget,
+  type GetConfigResponse,
+  type GetDashboardResponse,
+} from "../../api/client";
+import { mockDashboardData } from "./mockDashboardData";
+import type { BudgetTarget, DashboardData } from "./types";
+
+export interface DashboardDataSource {
+  getDashboardData(month: string): Promise<DashboardData>;
+}
+
+function toBudgetTargets(targets: ApiBudgetTarget[]): BudgetTarget[] {
+  return targets.map((target) => {
+    let targetAmount: number | undefined;
+    if (target.monthlyTarget === null) {
+      targetAmount = undefined;
+    } else {
+      targetAmount = target.monthlyTarget ?? target.amount;
+    }
+
+    return {
+      category: target.category,
+      monthlyTarget: targetAmount,
+      month: target.month,
+    };
+  });
+}
+
+function normalizeDashboardData(config: GetConfigResponse, dashboard: GetDashboardResponse): DashboardData {
+  return {
+    month: dashboard.month,
+    expenseCategories: config.expenseCategories,
+    budgetTargets: toBudgetTargets(config.budgetTargets.length ? config.budgetTargets : dashboard.budgetTargets),
+    expenses: dashboard.expenseRows ?? dashboard.expenses ?? [],
+    income: dashboard.incomeRows ?? dashboard.income ?? [],
+  };
+}
+
+export class AppsScriptDashboardDataSource implements DashboardDataSource {
+  constructor(private readonly client: AppsScriptApiClient) { }
+
+  async getDashboardData(month: string): Promise<DashboardData> {
+    let config: GetConfigResponse;
+    try {
+      config = await this.client.getConfig();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Unable to load categories and budget targets from config: ${message}`);
+    }
+
+    if (!config.expenseCategories?.length) {
+      throw new Error("Config did not return expense categories.");
+    }
+
+    if (!config.incomeCategories?.length) {
+      throw new Error("Config did not return income categories.");
+    }
+
+    let dashboard: GetDashboardResponse;
+    try {
+      dashboard = await this.client.getDashboard(month);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      throw new Error(`Unable to load dashboard data for ${month}: ${message}`);
+    }
+
+    return normalizeDashboardData(config, dashboard);
+  }
+}
+
+export class MockDashboardDataSource implements DashboardDataSource {
+  async getDashboardData(month: string): Promise<DashboardData> {
+    return {
+      ...mockDashboardData,
+      month,
+    };
+  }
+}
+
+export function createDashboardDataSource(): DashboardDataSource {
+  if (import.meta.env.VITE_USE_MOCK_DASHBOARD !== "false") {
+    return new MockDashboardDataSource();
+  }
+
+  const url = import.meta.env.VITE_APPS_SCRIPT_URL;
+  if (!url) {
+    throw new Error("VITE_APPS_SCRIPT_URL is required when VITE_USE_MOCK_DASHBOARD=false");
+  }
+
+  return new AppsScriptDashboardDataSource(new AppsScriptApiClient(url));
+}

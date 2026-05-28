@@ -1,0 +1,9 @@
+{
+  "name": "Budget Dashboard",
+  "short_name": "Budget",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f3e9",
+  "theme_color": "#f25f4c",
+  "icons": []
+}
