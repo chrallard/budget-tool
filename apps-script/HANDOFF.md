@@ -23,6 +23,7 @@ All endpoints return the shared envelope:
   - `direction` must be `income` or `expense`.
   - `displayDate` required and parseable; written as `MM-DD-YYYY`.
   - `editableAmount` numeric and finite.
+  - `displayNameOverride` optional; when provided must be non-empty after trimming.
   - `selectedCategory` required and must exist in sheet category list by direction.
   - `importFingerprint` required.
   - `sourceAccount` must be `chequing` or `credit_card`.
@@ -39,8 +40,10 @@ All endpoints return the shared envelope:
   - Income: `B/G` from row `91` until blank category.
 - Writes imported expense rows to `Expenses` with:
   - `Date`, `Store / Vendor`, `$ Amount`, `Expense Category`, `Notes`, `Entry Method=Importer`
+  - `Store / Vendor` uses `displayNameOverride` when provided; otherwise falls back to normalized/original description.
 - Writes imported income rows to `Income` with:
   - `Date`, `Source`, `$ Amount`, `Income Category`, `Notes`, `Entry Method=Importer`
+  - `Source` uses `displayNameOverride` when provided; otherwise falls back to normalized/original description.
 - Populates metadata columns on writes:
   - `Source Account`, `Original Date`, `Original Amount`, `Original Description`, `Import Fingerprint`, `Imported At`
 - Ensures metadata columns exist and auto-hides them.

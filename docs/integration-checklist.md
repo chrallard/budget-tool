@@ -55,6 +55,7 @@ Scope: MVP end-to-end integration across frontend, Apps Script API, and Google S
 
 - [x] Review is one-transaction-at-a-time.
 - [x] Approve requires valid category and valid transaction fields.
+- [x] Review supports display-name overrides for final `Store / Vendor` and `Source` writes.
 - [x] Duplicate warnings shown from backend-backed duplicate metadata.
 - [x] Skip and ignore states are terminal for submission payload.
 - [x] Reopen returns reviewed transactions to pending.
@@ -63,6 +64,7 @@ Scope: MVP end-to-end integration across frontend, Apps Script API, and Google S
 
 - [x] Submission sends approved rows only.
 - [x] Skipped and ignored rows excluded from payload.
+- [x] Optional `displayNameOverride` is included in payload when edited.
 - [x] Backend validates and writes by direction to Expenses/Income tabs.
 - [x] App returns to dashboard and refreshes on successful import.
 

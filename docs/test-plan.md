@@ -60,8 +60,10 @@ Import review:
 - Validate approve/skip/ignored transitions.
 - Validate category-required approval validation.
 - Validate amount/category/notes edits.
+- Validate display-name override edit path for expense and income transactions.
 - Validate duplicate warning display and actions.
 - Validate importBatch payload exclusion for skipped/ignored transactions.
+- Validate importBatch payload includes optional `displayNameOverride` only when provided.
 
 ### Integration and backend validation
 

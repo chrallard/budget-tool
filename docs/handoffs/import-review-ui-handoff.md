@@ -28,6 +28,7 @@ Agent: budget-import-review-ui
 - Loads expense/income categories and existing fingerprint records from the action-based API layer through an import data source.
 - Shows exactly one pending transaction card at a time.
 - Supports amount edits, category selection, notes editing, approve, skip, and ignore actions.
+- Supports display-name override edits for final `Store / Vendor` (expense) and `Source` (income) writes.
 - Enforces approval validation:
   - date present
   - vendor/source present
@@ -53,6 +54,7 @@ Agent: budget-import-review-ui
   - `displayDate`
   - `selectedCategory`
   - `editableAmount`
+  - `displayNameOverride?`
   - `notes?`
   - `sourceAccount`
   - `originalDate`
@@ -77,7 +79,7 @@ Executed:
 - `npm run build`
 
 Result:
-- 17 focused import-review tests passed.
+- 18 focused import-review tests passed.
 - Production build passed.
 
 Covered behaviors:
@@ -88,6 +90,7 @@ Covered behaviors:
 - One-transaction-at-a-time review queue
 - Approval blocked without valid category
 - Amount override updates editable amount only
+- Display-name override updates the final submitted name only
 - Notes editing
 - Skip and ignore actions
 - Duplicate warning display

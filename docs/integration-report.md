@@ -4,6 +4,11 @@ Date: 2026-05-25
 Agent: budget-integration
 Recommendation: Blocked-pending-contract-decision
 
+Addendum (2026-05-27):
+
+- Import review now supports optional display-name override for final sheet writes.
+- Contract docs were updated to include optional `displayNameOverride` in import payloads.
+
 ## Scope executed
 
 Integrated frontend and backend contracts for:
@@ -15,7 +20,7 @@ Integrated frontend and backend contracts for:
 - approved-batch submission
 - dashboard refresh after successful import
 
-No shared contract documentation was changed.
+Shared contract documentation has since been updated for optional display-name override behavior.
 
 ## Fixed integration defects
 
