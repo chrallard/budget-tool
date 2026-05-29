@@ -71,7 +71,7 @@ describe("dashboard calculations", () => {
     expect(summary.profit).toBe(1270);
   });
 
-  it("orders preferred categories first and keeps remaining categories in original order", () => {
+  it("orders category cards by used spending in descending order", () => {
     const cards = calculateCategoryCards(
       ["Pets", "Entertainment", "Food", "Gas", "Other", "Savings", "Donations", "Coffee out"],
       budgetTargets,
@@ -80,12 +80,12 @@ describe("dashboard calculations", () => {
     );
 
     expect(cards.map((card) => card.category)).toEqual([
-      "Other",
       "Food",
       "Coffee out",
-      "Gas",
-      "Entertainment",
       "Donations",
+      "Entertainment",
+      "Gas",
+      "Other",
       "Pets",
       "Savings",
     ]);
