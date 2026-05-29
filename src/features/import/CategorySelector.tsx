@@ -9,6 +9,8 @@ export function CategorySelector({
   selectedCategory,
   onChange,
 }: Readonly<CategorySelectorProps>) {
+  const sortedCategories = [...categories].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+
   return (
     <label className="review-field">
       <span>Category</span>
@@ -18,7 +20,7 @@ export function CategorySelector({
         onChange={(event) => onChange(event.currentTarget.value)}
       >
         <option value="">Select a category</option>
-        {categories.map((category) => (
+        {sortedCategories.map((category) => (
           <option key={category} value={category}>
             {category}
           </option>

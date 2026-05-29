@@ -149,6 +149,33 @@ describe("ImportPage", () => {
     expect(screen.getByText("ignored")).toBeInTheDocument();
   });
 
+  it("sorts category options alphabetically in the import dropdown", async () => {
+    const user = userEvent.setup();
+    render(
+      <ImportPage
+        dataSource={createDataSource({
+          async getImportReviewContext() {
+            return {
+              expenseCategories: ["Transportation", "coffee out", "Food", "Bills"],
+              incomeCategories: ["Salary", "Other"],
+              existingRecords: [],
+            };
+          },
+        })}
+      />,
+    );
+
+    const input = await screen.findByLabelText(/choose a chequing or visa export/i);
+    const csv = csvWithRows([
+      'CHEQUING,123,05/01/2026,,LOBLAWS 123,,"-10.00",',
+    ]);
+    await user.upload(input, new File([csv], "sorted-categories.csv", { type: "text/csv" }));
+
+    const categorySelect = await screen.findByLabelText("Category");
+    const optionLabels = Array.from((categorySelect as HTMLSelectElement).options).map((option) => option.text);
+    expect(optionLabels).toEqual(["Select a category", "Bills", "coffee out", "Food", "Transportation"]);
+  });
+
   it("shows duplicate warnings and can skip as duplicate", async () => {
     const user = userEvent.setup();
     render(
