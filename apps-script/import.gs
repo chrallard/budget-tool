@@ -46,6 +46,14 @@ function handleImportBatchAction_(e, requestId) {
     return jsonError_("SHEET_WRITE_ERROR", "All writes failed.", { failures: result.failures }, requestId);
   }
 
+  if (result.written.expenses > 0) {
+    sortSheetRowsByDateDesc_(expensesSheet, expensesHeaders);
+  }
+
+  if (result.written.income > 0) {
+    sortSheetRowsByDateDesc_(incomeSheet, incomeHeaders);
+  }
+
   return jsonSuccess_(result, requestId);
 }
 

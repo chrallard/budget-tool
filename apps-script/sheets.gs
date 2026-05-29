@@ -354,6 +354,92 @@ function appendRowByHeaders_(sheet, headerMap, fieldValuesByHeader) {
   sheet.appendRow(row);
 }
 
+function sortSheetRowsByDateDesc_(sheet, headerMap) {
+  var dateCol = headerMap && headerMap.Date;
+  if (!dateCol) {
+    return;
+  }
+
+  var headerRow = Number(headerMap.__headerRow || 1);
+  var startRow = headerRow + 1;
+  var lastRow = sheet.getLastRow();
+  var lastCol = sheet.getLastColumn();
+
+  if (lastRow < startRow || lastCol < 1) {
+    return;
+  }
+
+  var rowCount = lastRow - startRow + 1;
+  var range = sheet.getRange(startRow, 1, rowCount, lastCol);
+  var values = range.getValues();
+  var indexed = [];
+
+  for (var i = 0; i < values.length; i += 1) {
+    indexed.push({
+      index: i,
+      row: values[i],
+      dateMs: parseSheetDateToMillis_(values[i][dateCol - 1])
+    });
+  }
+
+  indexed.sort(function (a, b) {
+    var aHasDate = a.dateMs !== null;
+    var bHasDate = b.dateMs !== null;
+
+    if (aHasDate && bHasDate && a.dateMs !== b.dateMs) {
+      return b.dateMs - a.dateMs;
+    }
+
+    if (aHasDate && !bHasDate) {
+      return -1;
+    }
+
+    if (!aHasDate && bHasDate) {
+      return 1;
+    }
+
+    return a.index - b.index;
+  });
+
+  var sortedValues = [];
+  for (var j = 0; j < indexed.length; j += 1) {
+    sortedValues.push(indexed[j].row);
+  }
+
+  range.setValues(sortedValues);
+}
+
+function parseSheetDateToMillis_(value) {
+  if (value === null || value === undefined || String(value).trim() === "") {
+    return null;
+  }
+
+  if (Object.prototype.toString.call(value) === "[object Date]" && !isNaN(value.getTime())) {
+    return value.getTime();
+  }
+
+  var normalized = normalizeToMmDdYyyy_(value);
+  if (!normalized) {
+    return null;
+  }
+
+  var match = normalized.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (!match) {
+    return null;
+  }
+
+  var month = Number(match[1]) - 1;
+  var day = Number(match[2]);
+  var year = Number(match[3]);
+  var parsed = new Date(year, month, day);
+
+  if (isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed.getTime();
+}
+
 function flattenUniqueNonEmpty_(values) {
   var output = [];
   var seen = {};
