@@ -47,32 +47,32 @@ function normalizeDashboardData(config: GetConfigResponse, dashboard: GetDashboa
 }
 
 export class AppsScriptDashboardDataSource implements DashboardDataSource {
-  private static cachedConfig: GetConfigResponse | null = null;
-  private static inFlightConfig: Promise<GetConfigResponse> | null = null;
-  private static readonly inFlightDashboardByMonth = new Map<string, Promise<DashboardData>>();
+  private cachedConfig: GetConfigResponse | null = null;
+  private inFlightConfig: Promise<GetConfigResponse> | null = null;
+  private readonly inFlightDashboardByMonth = new Map<string, Promise<DashboardData>>();
 
   constructor(private readonly client: AppsScriptApiClient) { }
 
   private async getConfigCached(): Promise<GetConfigResponse> {
-    if (AppsScriptDashboardDataSource.cachedConfig) {
-      return AppsScriptDashboardDataSource.cachedConfig;
+    if (this.cachedConfig) {
+      return this.cachedConfig;
     }
 
-    if (AppsScriptDashboardDataSource.inFlightConfig) {
-      return AppsScriptDashboardDataSource.inFlightConfig;
+    if (this.inFlightConfig) {
+      return this.inFlightConfig;
     }
 
     const configRequest = this.client
       .getConfig()
       .then((config) => {
-        AppsScriptDashboardDataSource.cachedConfig = config;
+        this.cachedConfig = config;
         return config;
       })
       .finally(() => {
-        AppsScriptDashboardDataSource.inFlightConfig = null;
+        this.inFlightConfig = null;
       });
 
-    AppsScriptDashboardDataSource.inFlightConfig = configRequest;
+    this.inFlightConfig = configRequest;
     return configRequest;
   }
 
@@ -105,16 +105,16 @@ export class AppsScriptDashboardDataSource implements DashboardDataSource {
   }
 
   async getDashboardData(month: string): Promise<DashboardData> {
-    const existingRequest = AppsScriptDashboardDataSource.inFlightDashboardByMonth.get(month);
+    const existingRequest = this.inFlightDashboardByMonth.get(month);
     if (existingRequest) {
       return existingRequest;
     }
 
     const request = this.loadDashboardData(month).finally(() => {
-      AppsScriptDashboardDataSource.inFlightDashboardByMonth.delete(month);
+      this.inFlightDashboardByMonth.delete(month);
     });
 
-    AppsScriptDashboardDataSource.inFlightDashboardByMonth.set(month, request);
+    this.inFlightDashboardByMonth.set(month, request);
     return request;
   }
 }
