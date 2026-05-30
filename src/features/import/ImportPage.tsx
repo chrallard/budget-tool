@@ -224,7 +224,7 @@ export function ImportPage({
       ) : null}
 
       {reviewState && counts ? (
-        <>
+        <div className="content-fade-in">
           <ImportProgress fileName={reviewState.fileName} sourceAccount={reviewState.sourceAccount} counts={counts} />
 
           {currentTransaction ? (
@@ -283,7 +283,7 @@ export function ImportPage({
               setReviewState((state) => (state ? reopenTransaction(state, transactionId) : state))
             }
           />
-        </>
+        </div>
       ) : null}
     </main>
   );

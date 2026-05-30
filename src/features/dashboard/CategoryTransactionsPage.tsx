@@ -166,7 +166,7 @@ export function CategoryTransactionsPage({
   }
 
   return (
-    <div className="category-transactions-page">
+    <div className="category-transactions-page content-fade-in">
       <header className="category-transactions-header">
         <button type="button" onClick={onBack} className="back-button">
           ← Back to Dashboard

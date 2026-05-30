@@ -134,7 +134,7 @@ export function DashboardPage({
   }
 
   return (
-    <main className="dashboard-page" style={{ overflowX: "hidden" }}>
+    <main className="dashboard-page content-fade-in" style={{ overflowX: "hidden" }}>
       <header className="dashboard-hero">
         <div>
           <p className="dashboard-eyebrow">Budget Dashboard</p>
