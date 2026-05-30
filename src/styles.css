@@ -347,6 +347,7 @@ h1 {
   text-align: left;
   appearance: none;
   font-family: inherit;
+  color: var(--ink);
   width: 100%;
 }
 

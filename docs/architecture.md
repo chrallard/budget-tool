@@ -75,6 +75,12 @@ Non-negotiable rules:
 - Sheet writes occur only through backend API.
 - Access controls for Apps Script deployment must be enforced in deployment config.
 
+## UI Compatibility Note
+
+- Interactive category cards are rendered as button elements.
+- iOS Safari may apply a default blue control text color when a button does not define color explicitly.
+- The shared stylesheet must keep an explicit text color on `.category-card--button` to preserve dashboard card title and amount colors.
+
 ## Transport Acceptance Criteria
 
 - No browser CORS or auth-redirect failure for `config`, `dashboard`, `importFingerprints`, and `importBatch` when using the approved MVP verification path through `/api/apps-script`.
