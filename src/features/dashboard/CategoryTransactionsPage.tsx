@@ -126,19 +126,16 @@ export function CategoryTransactionsPage({
     });
   }, [dashboardData, category, month]);
 
-  const totals = useMemo(() => {
+  const totalExpenses = useMemo(() => {
     let expenses = 0;
-    let income = 0;
 
     transactions.forEach((txn) => {
       if (txn.type === "expense") {
         expenses += txn.amount;
-      } else {
-        income += txn.amount;
       }
     });
 
-    return { expenses, income, net: income - expenses };
+    return expenses;
   }, [transactions]);
 
   if (isLoading) {
@@ -180,22 +177,8 @@ export function CategoryTransactionsPage({
       <section className="category-transactions-summary">
         <div className="summary-card">
           <span className="summary-label">Total Expenses</span>
-          <strong className="summary-value">{formatCurrency(totals.expenses)}</strong>
+          <strong className="summary-value">{formatCurrency(totalExpenses)}</strong>
         </div>
-        <div className="summary-card">
-          <span className="summary-label">Total Income</span>
-          <strong className="summary-value">{formatCurrency(totals.income)}</strong>
-        </div>
-        {totals.income > 0 || totals.expenses > 0 ? (
-          <div className="summary-card">
-            <span className="summary-label">Net</span>
-            <strong
-              className={`summary-value ${totals.net >= 0 ? "summary-value--positive" : "summary-value--negative"}`}
-            >
-              {formatCurrency(totals.net)}
-            </strong>
-          </div>
-        ) : null}
       </section>
 
       {transactions.length === 0 ? (
