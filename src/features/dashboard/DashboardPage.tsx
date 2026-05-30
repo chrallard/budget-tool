@@ -18,9 +18,14 @@ import type { DashboardData } from "./types";
 type DashboardPageProps = {
   dataSource?: DashboardDataSource;
   onCategorySelected?: (category: string, month: string) => void;
+  onDataLoaded?: (month: string, data: DashboardData) => void;
 };
 
-export function DashboardPage({ dataSource, onCategorySelected }: Readonly<DashboardPageProps>) {
+export function DashboardPage({
+  dataSource,
+  onCategorySelected,
+  onDataLoaded,
+}: Readonly<DashboardPageProps>) {
   const resolvedDataSource = useMemo(
     () => dataSource ?? createDashboardDataSource(),
     [dataSource],
@@ -43,6 +48,7 @@ export function DashboardPage({ dataSource, onCategorySelected }: Readonly<Dashb
         }
 
         setDashboardData(data);
+        onDataLoaded?.(selectedMonth, data);
       })
       .catch((err) => {
         if (!active) {
@@ -60,7 +66,7 @@ export function DashboardPage({ dataSource, onCategorySelected }: Readonly<Dashb
     return () => {
       active = false;
     };
-  }, [resolvedDataSource, selectedMonth]);
+  }, [onDataLoaded, resolvedDataSource, selectedMonth]);
 
   const months = useMemo(() => {
     if (!dashboardData) {

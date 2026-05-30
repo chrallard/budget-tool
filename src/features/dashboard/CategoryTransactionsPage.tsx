@@ -11,6 +11,7 @@ type CategoryTransactionsPageProps = {
   month: string;
   onBack: () => void;
   dataSource?: DashboardDataSource;
+  initialDashboardData?: DashboardData | null;
 };
 
 type DisplayTransaction = {
@@ -26,16 +27,28 @@ export function CategoryTransactionsPage({
   month,
   onBack,
   dataSource,
+  initialDashboardData,
 }: Readonly<CategoryTransactionsPageProps>) {
   const resolvedDataSource = useMemo(
     () => dataSource ?? createDashboardDataSource(),
     [dataSource],
   );
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    initialDashboardData && initialDashboardData.month === month ? initialDashboardData : null,
+  );
+  const [isLoading, setIsLoading] = useState(
+    !(initialDashboardData && initialDashboardData.month === month),
+  );
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (initialDashboardData && initialDashboardData.month === month) {
+      setDashboardData(initialDashboardData);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
     let active = true;
     setIsLoading(true);
     setError(null);
@@ -57,7 +70,7 @@ export function CategoryTransactionsPage({
     return () => {
       active = false;
     };
-  }, [resolvedDataSource, month]);
+  }, [initialDashboardData, resolvedDataSource, month]);
 
   const transactions = useMemo(() => {
     if (!dashboardData) return [];
@@ -125,17 +138,6 @@ export function CategoryTransactionsPage({
       </main>
     );
   }
-
-  // Debug: Show what we have
-  const debugInfo = dashboardData ? {
-    categorySearching: category,
-    monthSearching: month,
-    expenseCount: dashboardData.expenses.length,
-    expenseCategories: [...new Set(dashboardData.expenses.map(e => e.category))],
-    sampleExpenseDates: dashboardData.expenses.slice(0, 10).map(e => ({ date: e.date, category: e.category })),
-    expensesMatchingMonth: dashboardData.expenses.filter(e => e.date.startsWith(month)).length,
-    allUniqueDatesInData: [...new Set(dashboardData.expenses.map(e => e.date.substring(0, 7)))],
-  } : null;
 
   if (error) {
     return (

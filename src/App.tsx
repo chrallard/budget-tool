@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { CategoryTransactionsPage } from "./features/dashboard/CategoryTransactionsPage";
 import { ImportPage } from "./features/import/ImportPage";
+import type { DashboardData } from "./features/dashboard/types";
 
 export function App() {
   const [activeView, setActiveView] = useState<"dashboard" | "import" | "category-transactions">(
@@ -10,12 +11,20 @@ export function App() {
   const [dashboardRefreshToken, setDashboardRefreshToken] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [categoryTransactionMonth, setCategoryTransactionMonth] = useState<string>("");
+  const [dashboardDataByMonth, setDashboardDataByMonth] = useState<Record<string, DashboardData>>({});
 
   const handleCategorySelected = (category: string, month: string) => {
     setSelectedCategory(category);
     setCategoryTransactionMonth(month);
     setActiveView("category-transactions");
   };
+
+  const handleDashboardDataLoaded = useCallback((month: string, data: DashboardData) => {
+    setDashboardDataByMonth((previous) => ({
+      ...previous,
+      [month]: data,
+    }));
+  }, []);
 
   const handleBackToDashboard = () => {
     setActiveView("dashboard");
@@ -50,12 +59,13 @@ export function App() {
         </div>
       </header>
 
-      {activeView === "dashboard" ? (
+      <div style={{ display: activeView === "dashboard" ? "block" : "none" }}>
         <DashboardPage
           key={dashboardRefreshToken}
           onCategorySelected={handleCategorySelected}
+          onDataLoaded={handleDashboardDataLoaded}
         />
-      ) : null}
+      </div>
       {activeView === "import" ? (
         <ImportPage
           onImportSuccess={() => {
@@ -69,6 +79,7 @@ export function App() {
           category={selectedCategory}
           month={categoryTransactionMonth}
           onBack={handleBackToDashboard}
+          initialDashboardData={dashboardDataByMonth[categoryTransactionMonth] ?? null}
         />
       ) : null}
     </div>
