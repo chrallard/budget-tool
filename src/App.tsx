@@ -34,8 +34,8 @@ export function App() {
     <div className="app-shell">
       <header className="app-nav">
         <div>
-          <p className="dashboard-eyebrow">Budgeting MVP</p>
-          <h1>Budget workspace</h1>
+          <p className="dashboard-eyebrow">budget-tool</p>
+          <h1>Workspace</h1>
         </div>
         <div className="app-nav__buttons" role="tablist" aria-label="Primary views">
           <button
@@ -54,7 +54,7 @@ export function App() {
             className={activeView === "import" ? "nav-button nav-button--active" : "nav-button"}
             onClick={() => setActiveView("import")}
           >
-            Import review
+            Import
           </button>
         </div>
       </header>
