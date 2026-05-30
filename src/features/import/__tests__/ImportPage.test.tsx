@@ -22,6 +22,10 @@ function csvWithRows(rows: string[]): string {
   ].join("\n");
 }
 
+function tdCsvWithRows(rows: string[]): string {
+  return rows.join("\n");
+}
+
 function createDataSource(overrides: Partial<ImportDataSource> = {}): ImportDataSource {
   return {
     async getImportReviewContext() {
@@ -52,7 +56,7 @@ describe("ImportPage", () => {
     const user = userEvent.setup();
     render(<ImportPage dataSource={createDataSource()} />);
 
-    const input = await screen.findByLabelText(/choose a chequing or visa export/i);
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
     await user.upload(input, new File([fixture("rbc-chequing-valid.csv")], "chequing.csv", { type: "text/csv" }));
 
     expect(await screen.findByText("Detected source account")).toBeInTheDocument();
@@ -65,7 +69,7 @@ describe("ImportPage", () => {
     const user = userEvent.setup();
     render(<ImportPage dataSource={createDataSource()} />);
 
-    const input = await screen.findByLabelText(/choose a chequing or visa export/i);
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
     await user.upload(input, new File([fixture("rbc-visa-valid.csv")], "visa.csv", { type: "text/csv" }));
 
     expect(await screen.findByRole("heading", { name: "Credit card" })).toBeInTheDocument();
@@ -75,7 +79,7 @@ describe("ImportPage", () => {
     const user = userEvent.setup();
     render(<ImportPage dataSource={createDataSource()} />);
 
-    const input = await screen.findByLabelText(/choose a chequing or visa export/i);
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
     await user.upload(input, new File([fixture("rbc-invalid-headers.csv")], "invalid.csv", { type: "text/csv" }));
 
     expect(await screen.findByText("CSV is missing one or more required RBC columns.")).toBeInTheDocument();
@@ -85,7 +89,7 @@ describe("ImportPage", () => {
     const user = userEvent.setup();
     render(<ImportPage dataSource={createDataSource()} />);
 
-    const input = await screen.findByLabelText(/choose a chequing or visa export/i);
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
     await user.upload(input, new File(["   "], "empty.csv", { type: "text/csv" }));
 
     expect(await screen.findByText("CSV file is empty.")).toBeInTheDocument();
@@ -107,7 +111,7 @@ describe("ImportPage", () => {
       />,
     );
 
-    const input = await screen.findByLabelText(/choose a chequing or visa export/i);
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
     const csv = csvWithRows([
       'CHEQUING,123,05/01/2026,,MYSTERY SHOP,,"-10.00",',
     ]);
@@ -134,7 +138,7 @@ describe("ImportPage", () => {
     const user = userEvent.setup();
     render(<ImportPage dataSource={createDataSource()} />);
 
-    const input = await screen.findByLabelText(/choose a chequing or visa export/i);
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
     const csv = csvWithRows([
       'CHEQUING,123,05/01/2026,,LOBLAWS 123,,"-10.00",',
       'CHEQUING,123,05/02/2026,,ACCOUNT TRANSFER SAVINGS,,"-25.00",',
@@ -165,7 +169,7 @@ describe("ImportPage", () => {
       />,
     );
 
-    const input = await screen.findByLabelText(/choose a chequing or visa export/i);
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
     const csv = csvWithRows([
       'CHEQUING,123,05/01/2026,,LOBLAWS 123,,"-10.00",',
     ]);
@@ -201,7 +205,7 @@ describe("ImportPage", () => {
       />,
     );
 
-    const input = await screen.findByLabelText(/choose a chequing or visa export/i);
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
     const csv = csvWithRows([
       'CHEQUING,123,05/01/2026,,LOBLAWS 123,,"-10.00",',
     ]);
@@ -247,7 +251,7 @@ describe("ImportPage", () => {
       />,
     );
 
-    const input = await screen.findByLabelText(/choose a chequing or visa export/i);
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
     const csv = csvWithRows([
       'CHEQUING,123,05/01/2026,,LOBLAWS 123,,"-10.00",',
       'CHEQUING,123,05/03/2026,,ACCOUNT TRANSFER SAVINGS,,"-25.00",',
@@ -277,7 +281,7 @@ describe("ImportPage", () => {
 
     render(<ImportPage dataSource={createDataSource({ submitImportBatch })} />);
 
-    const input = await screen.findByLabelText(/choose a chequing or visa export/i);
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
     const csv = csvWithRows([
       'CHEQUING,123,05/01/2026,,LOBLAWS 123,,"-10.00",',
     ]);
@@ -289,5 +293,22 @@ describe("ImportPage", () => {
     expect(await screen.findByText("Sheet write failed")).toBeInTheDocument();
     expect(screen.getByText("LOBLAWS 123")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Reopen" })).toBeInTheDocument();
+  });
+
+  it("uploads a TD CSV and uses the same review flow", async () => {
+    const user = userEvent.setup();
+    render(<ImportPage dataSource={createDataSource()} />);
+
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
+    const csv = tdCsvWithRows([
+      '"2026-05-01","LOBLAWS 123","151.11",,"1200.00"',
+      '"2026-05-02","PAYROLL",,"1200.00","2400.00"',
+    ]);
+
+    await user.upload(input, new File([csv], "td.csv", { type: "text/csv" }));
+
+    expect(await screen.findByText("Detected source account")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "LOBLAWS 123" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "PAYROLL" })).not.toBeInTheDocument();
   });
 });

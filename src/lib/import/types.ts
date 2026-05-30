@@ -18,9 +18,13 @@ export const RBC_LOCKED_HEADERS = [
 
 export type RbcLockedHeader = (typeof RBC_LOCKED_HEADERS)[number];
 
+export type CsvImportFormat = "rbc" | "td";
+
 export type CsvDetectResult = {
+  format: CsvImportFormat;
   sourceAccount: SourceAccount;
-  headerIndexByName: Record<RbcLockedHeader, number>;
+  headerIndexByName: Record<string, number>;
+  dataStartRow: number;
 };
 
 export type RbcRawTransactionRow = {
@@ -32,6 +36,15 @@ export type RbcRawTransactionRow = {
   description2: string;
   cadAmount: string;
   usdAmount: string;
+  rowNumber: number;
+};
+
+export type TdRawTransactionRow = {
+  transactionDate: string;
+  description: string;
+  debitAmount: string;
+  creditAmount: string;
+  amount: string;
   rowNumber: number;
 };
 
@@ -54,6 +67,7 @@ export type TransactionDuplicateResult = {
 export type ImportParserErrorCode =
   | "EMPTY_CSV"
   | "INVALID_CSV"
+  | "UNSUPPORTED_CSV_FORMAT"
   | "UNSUPPORTED_RBC_FORMAT"
   | "MISSING_REQUIRED_COLUMNS"
   | "NO_VALID_TRANSACTION_ROWS"

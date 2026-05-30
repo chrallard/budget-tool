@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ImportParserError } from "../../lib/import/types";
-import { parseRbcCsv } from "./parser/rbcParser";
+import { parseBankCsv } from "./parser/bankParser";
 import { CsvUpload } from "./CsvUpload";
 import {
   createImportDataSource,
@@ -48,15 +48,12 @@ function toErrorMessage(error: unknown): string {
 }
 
 function readFileText(file: File): Promise<string> {
-  if (typeof file.text === "function") {
-    return file.text();
-  }
-
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result ?? ""));
-    reader.onerror = () => reject(new Error("Unable to read the selected file."));
-    reader.readAsText(file);
+    file.arrayBuffer().then((buffer) => {
+      resolve(new TextDecoder().decode(buffer));
+    }).catch(() => {
+      reject(new Error("Unable to read the selected file."));
+    });
   });
 }
 
@@ -152,7 +149,7 @@ export function ImportPage({
 
     try {
       const text = await readFileText(file);
-      const parsed = parseRbcCsv(text, {
+      const parsed = parseBankCsv(text, {
         expenseCategories: context.expenseCategories,
         incomeCategories: context.incomeCategories,
         existingRecords: context.existingRecords,

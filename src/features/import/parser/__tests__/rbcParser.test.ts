@@ -8,6 +8,7 @@ import {
   fingerprintFromNormalizedTransaction,
   fingerprintTransaction,
 } from "../../../../lib/import/fingerprintTransaction";
+import { parseBankCsv } from "../../../../lib/import/parseBankCsv";
 import { parseRbcCsv } from "../../../../lib/import/parseRbcCsv";
 import { suggestCategory } from "../../../../lib/import/suggestCategory";
 import { suggestIgnoreReason } from "../../../../lib/import/suggestIgnoreReason";
@@ -291,6 +292,44 @@ describe("parseRbcCsv", () => {
     expect(result.transactions[0].direction).toBe("income");
     expect(result.transactions[0].suggestedCategory).toBeUndefined();
     expect(result.transactions[0].selectedCategory).toBeUndefined();
+  });
+});
+
+describe("parseBankCsv", () => {
+  it("parses TD chequing CSV and enters the same review flow", () => {
+    const result = parseBankCsv(
+      fixture("td-chequing-valid.csv"),
+      baseOptions(),
+    );
+
+    expect(result.sourceAccount).toBe("chequing");
+    expect(result.transactions).toHaveLength(4);
+
+    const grocery = result.transactions.find((tx) =>
+      tx.originalDescription.includes("LOBLAWS"),
+    );
+    expect(grocery?.direction).toBe("expense");
+    expect(grocery?.editableAmount).toBe(151.11);
+
+    const payroll = result.transactions.find((tx) =>
+      tx.originalDescription.includes("PAYROLL"),
+    );
+    expect(payroll?.direction).toBe("income");
+    expect(payroll?.editableAmount).toBe(1200);
+  });
+
+  it("throws structured error for unsupported CSV formats", () => {
+    expect(() =>
+      parseBankCsv(["Foo,Bar,Baz", "1,2,3"].join("\n"), baseOptions()),
+    ).toThrowError(ImportParserError);
+
+    try {
+      parseBankCsv(["Foo,Bar,Baz", "1,2,3"].join("\n"), baseOptions());
+      throw new Error("Expected parse to throw");
+    } catch (error) {
+      expect(error).toBeInstanceOf(ImportParserError);
+      expect((error as ImportParserError).code).toBe("UNSUPPORTED_CSV_FORMAT");
+    }
   });
 });
 

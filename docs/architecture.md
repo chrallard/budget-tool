@@ -6,7 +6,7 @@ This document defines the shared implementation contract for the MVP budgeting t
 
 Primary flows:
 
-1. RBC CSV to Google Sheets importer
+1. RBC and TD CSV to Google Sheets importer
 2. Google Sheets to mobile-friendly dashboard
 
 System of record: Google Sheets.
@@ -36,7 +36,7 @@ Non-negotiable rules:
 
 ### React SPA
 
-- Upload and parse RBC CSV files in-browser.
+- Upload and parse RBC or TD CSV files in-browser.
 - Normalize CSV rows into `NormalizedTransaction` records.
 - Run category suggestion rules.
 - Execute duplicate checks using backend-provided imported metadata.
@@ -96,6 +96,6 @@ Non-negotiable rules:
 3. Exact cell ranges for category budget targets in `Budget Targets`.
 4. Whether metadata columns should be hidden automatically by Apps Script.
 5. Whether existing manual rows should get `Entry Method = Manual` retroactively.
-6. Exact RBC CSV headers to support for chequing and credit card exports.
+6. Exact RBC and TD CSV headers to support for chequing and credit card exports.
 7. Exact date format to write into Google Sheets.
 8. Whether ignored transactions should be stored anywhere in MVP or simply skipped.

@@ -89,7 +89,9 @@ export function detectRbcCsvType(csvRows: string[][]): CsvDetectResult {
   const sourceAccount = resolveSourceAccount(accountTypes);
 
   return {
+    format: "rbc",
     sourceAccount,
     headerIndexByName,
+    dataStartRow: 1,
   };
 }

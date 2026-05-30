@@ -30,6 +30,17 @@ type NormalizeTransactionOptions = {
   }[];
 };
 
+type NormalizeImportedRowOptions = {
+  sourceAccount: SourceAccount;
+  originalDate: string;
+  originalDescription: string;
+  originalAmount: number;
+  rowIndex: number;
+  expenseCategories: string[];
+  incomeCategories: string[];
+  existingRecords?: NormalizeTransactionOptions["existingRecords"];
+};
+
 function parseAmount(cadAmount: string, usdAmount: string): number {
   const cad = cadAmount.trim();
   const usd = usdAmount.trim();
@@ -101,19 +112,18 @@ function createStableId(
   return `${sourceAccount}-${originalDate}-${amount}-${desc}-${rowIndex}`;
 }
 
-export function normalizeRbcRowToTransaction({
+export function normalizeImportedRowToTransaction({
   sourceAccount,
-  row,
+  originalDate,
+  originalDescription,
+  originalAmount,
   rowIndex,
   expenseCategories,
   incomeCategories,
   existingRecords = [],
-}: NormalizeTransactionOptions): NormalizedTransaction {
-  const originalDate = parseRbcDateToIso(row.transactionDate);
+}: NormalizeImportedRowOptions): NormalizedTransaction {
   const displayDate = formatIsoToMmDdYyyy(originalDate);
-  const originalDescription = buildOriginalDescription(row.description1, row.description2);
   const normalizedDescriptionValue = normalizeDescription(originalDescription);
-  const originalAmount = parseAmount(row.cadAmount, row.usdAmount);
   const classification = classifyDirectionAndEditableAmount(
     originalAmount,
     originalDescription,
@@ -169,4 +179,28 @@ export function normalizeRbcRowToTransaction({
     duplicateMatches: duplicateResult.duplicateMatches,
     importFingerprint,
   };
+}
+
+export function normalizeRbcRowToTransaction({
+  sourceAccount,
+  row,
+  rowIndex,
+  expenseCategories,
+  incomeCategories,
+  existingRecords = [],
+}: NormalizeTransactionOptions): NormalizedTransaction {
+  const originalDate = parseRbcDateToIso(row.transactionDate);
+  const originalDescription = buildOriginalDescription(row.description1, row.description2);
+  const originalAmount = parseAmount(row.cadAmount, row.usdAmount);
+
+  return normalizeImportedRowToTransaction({
+    sourceAccount,
+    originalDate,
+    originalDescription,
+    originalAmount,
+    rowIndex,
+    expenseCategories,
+    incomeCategories,
+    existingRecords,
+  });
 }

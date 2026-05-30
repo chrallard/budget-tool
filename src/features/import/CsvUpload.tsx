@@ -9,17 +9,17 @@ export function CsvUpload({ disabled = false, onFileSelected }: Readonly<CsvUplo
       <div className="import-panel__header">
         <div>
           <p className="dashboard-eyebrow">Import Review</p>
-          <h1>Upload an RBC CSV</h1>
+          <h1>Upload an RBC or TD CSV</h1>
         </div>
         <p className="import-panel__hint">
           One transaction card is shown at a time so approval decisions stay narrow.
         </p>
       </div>
 
-      <label className="csv-upload" htmlFor="rbc-csv-upload">
-        <span>Choose a chequing or Visa export</span>
+      <label className="csv-upload" htmlFor="bank-csv-upload">
+        <span>Choose an RBC or TD export</span>
         <input
-          id="rbc-csv-upload"
+          id="bank-csv-upload"
           type="file"
           accept=".csv,text/csv"
           disabled={disabled}

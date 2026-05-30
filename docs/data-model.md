@@ -97,6 +97,7 @@ sourceAccount|originalDate|originalAmount|normalizedDescription
 Rules:
 
 - Fingerprint uses original RBC fields, not edited budget values.
+- The importer applies the same fingerprint contract to TD CSV imports after normalization.
 - `originalAmount` remains unchanged even when `editableAmount` is overridden.
 
 ### Exact duplicate

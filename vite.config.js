@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-const defaultAppsScriptUrl = "https://script.google.com/macros/s/AKfycbzqbFloToHKYwvHPMqxgacQNL43qE8gu0q055Nqzo1zYywm5XEP7S2Xu2WYPxGpaePE/exec";
-const appsScriptProxyTargetUrl = new URL(process.env.APPS_SCRIPT_WEB_APP_URL || defaultAppsScriptUrl);
+var defaultAppsScriptUrl = "https://script.google.com/macros/s/AKfycbzqbFloToHKYwvHPMqxgacQNL43qE8gu0q055Nqzo1zYywm5XEP7S2Xu2WYPxGpaePE/exec";
+var appsScriptProxyTargetUrl = new URL(process.env.APPS_SCRIPT_WEB_APP_URL || defaultAppsScriptUrl);
 export default defineConfig({
     base: process.env.VITE_BASE_PATH || "/",
     plugins: [react()],
@@ -12,9 +12,7 @@ export default defineConfig({
                 changeOrigin: true,
                 secure: true,
                 followRedirects: true,
-                rewrite: (path) => {
-                    return path.replace(/^\/api\/apps-script/, appsScriptProxyTargetUrl.pathname + appsScriptProxyTargetUrl.search);
-                },
+                rewrite: function (path) { return path.replace(/^\/api\/apps-script/, appsScriptProxyTargetUrl.pathname + appsScriptProxyTargetUrl.search); },
             },
         },
     },
