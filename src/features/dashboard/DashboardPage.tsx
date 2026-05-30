@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { LoadingIndicator } from "../../components/LoadingIndicator";
 import { CategoryBudgetCard } from "./CategoryBudgetCard";
 import { MonthSelector } from "./MonthSelector";
 import { SummaryCards } from "./SummaryCards";
@@ -102,7 +103,11 @@ export function DashboardPage({
   }, [dashboardData, cards, selectedMonth]);
 
   if (isLoading) {
-    return <main className="dashboard-page">Loading dashboard...</main>;
+    return (
+      <main className="dashboard-page">
+        <LoadingIndicator label="Loading dashboard" centered />
+      </main>
+    );
   }
 
   if (error) {

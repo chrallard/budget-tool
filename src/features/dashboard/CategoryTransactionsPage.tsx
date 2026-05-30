@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { LoadingIndicator } from "../../components/LoadingIndicator";
 import { formatCurrency } from "./format";
 import {
   createDashboardDataSource,
@@ -143,7 +144,7 @@ export function CategoryTransactionsPage({
   if (isLoading) {
     return (
       <main className="category-transactions-page">
-        <p>Loading transactions...</p>
+        <LoadingIndicator label="Loading transactions" centered />
       </main>
     );
   }

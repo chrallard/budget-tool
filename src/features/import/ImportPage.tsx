@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { LoadingIndicator } from "../../components/LoadingIndicator";
 import type { ImportParserError } from "../../lib/import/types";
 import { parseBankCsv } from "./parser/bankParser";
 import { CsvUpload } from "./CsvUpload";
@@ -207,7 +208,9 @@ export function ImportPage({
     <main className="import-page">
       <CsvUpload disabled={isLoadingContext} onFileSelected={handleFileSelected} />
 
-      {isLoadingContext ? <p className="dashboard-muted">Loading categories and duplicate metadata...</p> : null}
+      {isLoadingContext ? (
+        <LoadingIndicator label="Loading categories and duplicate metadata" />
+      ) : null}
       {contextError ? (
         <section className="dashboard-error" role="alert">
           <h2>Import unavailable</h2>
