@@ -584,6 +584,10 @@ h1 {
   font-size: 0.95rem;
 }
 
+.transactions-cards--mobile {
+  display: none;
+}
+
 .transactions-table thead {
   background: linear-gradient(160deg, var(--surface), var(--surface-2));
   border-bottom: 1px solid var(--border);
@@ -636,6 +640,43 @@ h1 {
   font-size: 0.9rem;
 }
 
+.transaction-compact-card {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.94), rgba(254, 246, 228, 0.9));
+  padding: 0.65rem 0.75rem;
+}
+
+.transaction-compact-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.transaction-compact-card__date {
+  font-size: 0.82rem;
+  color: var(--ink-subtle);
+}
+
+.transaction-compact-card__amount {
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.transaction-compact-card__vendor {
+  margin: 0.3rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.transaction-compact-card__notes {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-subtle);
+}
+
 @media (max-width: 480px) {
 
   .app-shell,
@@ -661,5 +702,37 @@ h1 {
 
   .summary-card p {
     font-size: 1.05rem;
+  }
+}
+
+@media (max-width: 640px) {
+
+  .category-transactions-page {
+    padding: 0.85rem 0.8rem 1.5rem;
+  }
+
+  .category-transactions-header {
+    margin-bottom: 1rem;
+  }
+
+  .category-transactions-summary {
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+  }
+
+  .category-transactions-list {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .transactions-table--desktop {
+    display: none;
+  }
+
+  .transactions-cards--mobile {
+    display: grid;
+    gap: 0.5rem;
   }
 }

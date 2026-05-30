@@ -29,6 +29,15 @@ export function CategoryTransactionsPage({
   dataSource,
   initialDashboardData,
 }: Readonly<CategoryTransactionsPageProps>) {
+  useEffect(() => {
+    // jsdom logs a not-implemented error for scroll APIs; skip there.
+    if (typeof navigator !== "undefined" && /jsdom/i.test(navigator.userAgent)) {
+      return;
+    }
+
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [category, month]);
+
   const resolvedDataSource = useMemo(
     () => dataSource ?? createDashboardDataSource(),
     [dataSource],
@@ -192,7 +201,7 @@ export function CategoryTransactionsPage({
         <p className="category-transactions-empty">No transactions in this category for {month}.</p>
       ) : (
         <section className="category-transactions-list">
-          <table className="transactions-table">
+          <table className="transactions-table transactions-table--desktop">
             <thead>
               <tr>
                 <th>Date</th>
@@ -218,6 +227,25 @@ export function CategoryTransactionsPage({
               })}
             </tbody>
           </table>
+
+          <div className="transactions-cards transactions-cards--mobile" aria-label="Category transactions">
+            {transactions.map((txn, idx) => {
+              const key = `${txn.date}-${txn.vendor}-${txn.amount}-${txn.type}-${idx}`;
+              return (
+                <article key={key} className={`transaction-compact-card transaction-compact-card--${txn.type}`}>
+                  <div className="transaction-compact-card__row">
+                    <span className="transaction-compact-card__date">{txn.date}</span>
+                    <strong className={`transaction-compact-card__amount transaction-amount--${txn.type}`}>
+                      {txn.type === "income" ? "+" : "−"}
+                      {formatCurrency(txn.amount)}
+                    </strong>
+                  </div>
+                  <p className="transaction-compact-card__vendor">{txn.vendor}</p>
+                  {txn.notes ? <p className="transaction-compact-card__notes">{txn.notes}</p> : null}
+                </article>
+              );
+            })}
+          </div>
         </section>
       )}
     </div>

@@ -41,7 +41,7 @@ describe("CategoryTransactionsPage", () => {
     );
 
     expect(await screen.findByRole("heading", { name: "Food" })).toBeInTheDocument();
-    expect(screen.getByText("LOBLAWS")).toBeInTheDocument();
+    expect(screen.getAllByText("LOBLAWS").length).toBeGreaterThan(0);
     expect(getDashboardData).not.toHaveBeenCalled();
   });
 });
