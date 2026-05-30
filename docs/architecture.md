@@ -43,6 +43,8 @@ Non-negotiable rules:
 - Drive one-transaction-at-a-time review flow.
 - Submit approved transactions in a batch to backend.
 - Load and render monthly dashboard data.
+- Display category detail view: filter and list all transactions for a selected category and month.
+- Support navigation between dashboard and category transaction detail view.
 
 ### Google Apps Script API
 

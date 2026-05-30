@@ -17,9 +17,10 @@ import type { DashboardData } from "./types";
 
 type DashboardPageProps = {
   dataSource?: DashboardDataSource;
+  onCategorySelected?: (category: string, month: string) => void;
 };
 
-export function DashboardPage({ dataSource }: Readonly<DashboardPageProps>) {
+export function DashboardPage({ dataSource, onCategorySelected }: Readonly<DashboardPageProps>) {
   const resolvedDataSource = useMemo(
     () => dataSource ?? createDashboardDataSource(),
     [dataSource],
@@ -135,7 +136,13 @@ export function DashboardPage({ dataSource }: Readonly<DashboardPageProps>) {
 
       <section className="category-grid" aria-label="Expense category cards">
         {cards.map((card) => (
-          <CategoryBudgetCard key={card.category} card={card} />
+          <CategoryBudgetCard
+            key={card.category}
+            card={card}
+            onClick={
+              onCategorySelected ? () => onCategorySelected(card.category, selectedMonth) : undefined
+            }
+          />
         ))}
       </section>
 

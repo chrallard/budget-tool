@@ -4,11 +4,12 @@ import type { CategoryCardData } from "./types";
 
 type CategoryBudgetCardProps = {
   card: CategoryCardData;
+  onClick?: () => void;
 };
 
-export function CategoryBudgetCard({ card }: Readonly<CategoryBudgetCardProps>) {
-  return (
-    <article className={`category-card ${card.isOverBudget ? "category-card--over" : ""}`}>
+export function CategoryBudgetCard({ card, onClick }: Readonly<CategoryBudgetCardProps>) {
+  const content = (
+    <>
       <header className="category-card__header">
         <h3>{card.category}</h3>
         {card.isOverBudget ? <span className="category-card__pill">Over budget</span> : null}
@@ -34,6 +35,20 @@ export function CategoryBudgetCard({ card }: Readonly<CategoryBudgetCardProps>) 
       </div>
 
       <BudgetProgress progressPct={card.progressPct} isOverBudget={card.isOverBudget} />
-    </article>
+    </>
   );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        className={`category-card category-card--button ${card.isOverBudget ? "category-card--over" : ""}`}
+        onClick={onClick}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return <article className={`category-card ${card.isOverBudget ? "category-card--over" : ""}`}>{content}</article>;
 }

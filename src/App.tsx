@@ -1,10 +1,25 @@
 import { useState } from "react";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
+import { CategoryTransactionsPage } from "./features/dashboard/CategoryTransactionsPage";
 import { ImportPage } from "./features/import/ImportPage";
 
 export function App() {
-  const [activeView, setActiveView] = useState<"dashboard" | "import">("dashboard");
+  const [activeView, setActiveView] = useState<"dashboard" | "import" | "category-transactions">(
+    "dashboard",
+  );
   const [dashboardRefreshToken, setDashboardRefreshToken] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [categoryTransactionMonth, setCategoryTransactionMonth] = useState<string>("");
+
+  const handleCategorySelected = (category: string, month: string) => {
+    setSelectedCategory(category);
+    setCategoryTransactionMonth(month);
+    setActiveView("category-transactions");
+  };
+
+  const handleBackToDashboard = () => {
+    setActiveView("dashboard");
+  };
 
   return (
     <div className="app-shell">
@@ -35,13 +50,25 @@ export function App() {
         </div>
       </header>
 
-      {activeView === "dashboard" ? <DashboardPage key={dashboardRefreshToken} /> : null}
+      {activeView === "dashboard" ? (
+        <DashboardPage
+          key={dashboardRefreshToken}
+          onCategorySelected={handleCategorySelected}
+        />
+      ) : null}
       {activeView === "import" ? (
         <ImportPage
           onImportSuccess={() => {
             setDashboardRefreshToken((value) => value + 1);
             setActiveView("dashboard");
           }}
+        />
+      ) : null}
+      {activeView === "category-transactions" ? (
+        <CategoryTransactionsPage
+          category={selectedCategory}
+          month={categoryTransactionMonth}
+          onBack={handleBackToDashboard}
         />
       ) : null}
     </div>
