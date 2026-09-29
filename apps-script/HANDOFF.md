@@ -2,10 +2,10 @@
 
 ## Endpoints Implemented
 
-- `GET ?action=config`
-- `GET ?action=dashboard&month=YYYY-MM`
-- `GET ?action=importFingerprints`
-- `POST` body `{ "action": "importBatch", "approvedTransactions": [...] }`
+- `GET ?action=config&key=<APP_ACCESS_KEY>`
+- `GET ?action=dashboard&month=YYYY-MM&key=<APP_ACCESS_KEY>`
+- `GET ?action=importFingerprints&key=<APP_ACCESS_KEY>`
+- `POST` body `{ "action": "importBatch", "key": "<APP_ACCESS_KEY>", "approvedTransactions": [...] }`
 
 All endpoints return the shared envelope:
 

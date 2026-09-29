@@ -150,7 +150,7 @@ React SPA
 - Populate hidden metadata columns automatically
 - Return categories and budget targets
 - Return existing imported fingerprints for duplicate detection
-- Protect write access from direct public browser access where possible
+- Require a shared access key on every read and write
 
 ### Google Sheets Responsibilities
 
@@ -912,6 +912,18 @@ Feature: Security and privacy
   As a user
   I want my financial data protected
   So that only authorized app usage can read and write budget data
+
+  Scenario: Reject requests without the access key
+    Given the Apps Script web app is reachable without a Google login
+    When a request omits `key` or sends a value other than Script Property `APP_ACCESS_KEY`
+    Then the backend returns `UNAUTHORIZED`
+    And no sheet data is read or written
+
+  Scenario: Ask for the access key before showing budget data
+    Given the live app is opened
+    When the access key has not been accepted in this tab
+    Then the app shows an unlock form
+    And dashboard and import data stay unloaded
 
   Scenario: Do not expose private credentials in frontend
     Given the React app is hosted publicly

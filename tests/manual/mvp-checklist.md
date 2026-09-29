@@ -3,6 +3,12 @@
 Date: 2026-05-24
 Owner: budget-qa-test
 
+## Unlock
+
+- Live app shows an access-key form before dashboard or import data loads.
+- A wrong key shows an error and stays on the form.
+- The accepted key is kept for the tab and asked for again after a refresh.
+
 ## First app load
 
 - App loads without console errors.

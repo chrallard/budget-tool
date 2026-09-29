@@ -12,9 +12,19 @@ The API contract exposes four capabilities:
 Because Google Apps Script commonly routes through `doGet` and `doPost`, the implementation may use either:
 
 1. Path routing: `/config`, `/dashboard`, `/import-fingerprints`, `/import-batch`
-2. Action routing: `?action=config`, `?action=dashboard&month=YYYY-MM`, `?action=importFingerprints`, and `POST { action: "importBatch", ... }`
+2. Action routing: `?action=config&key=...`, `?action=dashboard&month=YYYY-MM&key=...`, `?action=importFingerprints&key=...`, and `POST { action: "importBatch", key: "...", ... }`
 
 Both styles must conform to the same request and response schemas below.
+
+## Access
+
+Every request must include the shared access key. The web app stays executable by anyone so the public site can call it. Google’s “Only myself” setting redirects anonymous calls to a login page, which the browser blocks.
+
+- Script property: `APP_ACCESS_KEY`
+- GET: query parameter `key`
+- POST: JSON field `key`
+- Missing property, missing key, or a non-matching key returns `UNAUTHORIZED` and reads or writes no sheet data
+- The React app asks for the key before loading data and keeps it in memory for the tab
 
 ## Transport Note
 
@@ -231,7 +241,9 @@ Response: `ApiResponse<PostImportBatchResponse>`
 
 ## Locked API Security Decision
 
-- Apps Script stays callable without a Google login and rejects every request whose `key` does not match Script Property `APP_ACCESS_KEY`.
+- Apps Script stays callable without a Google login.
+- Every request includes `key`. GET sends it as a query parameter. POST sends it as a JSON field.
+- `key` must match Script Property `APP_ACCESS_KEY`. Otherwise the response is `UNAUTHORIZED` and no sheet data is read or written.
 
 ## Locked API Routing Decision
 

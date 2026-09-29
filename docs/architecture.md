@@ -54,6 +54,7 @@ Non-negotiable rules:
 - Validate and write approved import rows to `Expenses` and `Income`.
 - Populate metadata columns automatically on import writes.
 - Return consistent, typed JSON responses.
+- Reject any request whose `key` does not match Script Property `APP_ACCESS_KEY`.
 
 ### Google Sheets
 

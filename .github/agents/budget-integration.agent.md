@@ -58,6 +58,7 @@ Wire:
 Verify:
 
 - Apps Script deployment URL is configurable
+- Frontend sends `key` on every Apps Script call after the unlock form accepts it
 - Frontend does not expose private Google credentials
 - Backend validates incoming payloads
 - Backend writes to existing tabs

@@ -30,10 +30,10 @@ Set the property in the Apps Script editor under Project Settings → Script pro
 6. Add Script property `APP_ACCESS_KEY` with a long random secret.
 7. Deploy and capture the Web App URL.
 8. Frontend calls this URL with action routing, including `key` on every request:
-   - `GET ?action=config`
-   - `GET ?action=dashboard&month=YYYY-MM`
-   - `GET ?action=importFingerprints`
-   - `POST { "action": "importBatch", "approvedTransactions": [...] }`
+   - `GET ?action=config&key=<APP_ACCESS_KEY>`
+   - `GET ?action=dashboard&month=YYYY-MM&key=<APP_ACCESS_KEY>`
+   - `GET ?action=importFingerprints&key=<APP_ACCESS_KEY>`
+   - `POST { "action": "importBatch", "key": "<APP_ACCESS_KEY>", "approvedTransactions": [...] }`
 
 ## Post-Deploy Smoke Checklist
 

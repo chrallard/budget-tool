@@ -185,6 +185,8 @@ Test or manually verify:
 ## Security and Privacy Tests
 Verify:
 
+- Requests without `key`, or with the wrong `key`, return `UNAUTHORIZED` and no sheet data
+- The live app shows an unlock form before dashboard or import data loads
 - No private Google credentials in frontend source
 - Frontend writes only through backend API
 - Backend validates all write payloads

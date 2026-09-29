@@ -59,10 +59,10 @@ POST /import-batch
 ### Apps Script-compatible action routing
 
 ```text
-GET  ?action=config
-GET  ?action=dashboard&month=YYYY-MM
-GET  ?action=importFingerprints
-POST { action: "submitImportBatch", transactions: [...] }
+GET  ?action=config&key=<APP_ACCESS_KEY>
+GET  ?action=dashboard&month=YYYY-MM&key=<APP_ACCESS_KEY>
+GET  ?action=importFingerprints&key=<APP_ACCESS_KEY>
+POST { action: "importBatch", key: "<APP_ACCESS_KEY>", approvedTransactions: [...] }
 ```
 
 ## Config Response
@@ -178,7 +178,8 @@ Return clear error messages. Do not claim success if a write fails.
 
 ## Security Requirements
 - Do not expose private credentials in frontend code.
-- Protect write access from direct public browser access where possible.
+- Require `key` on every request. GET sends it as a query parameter. POST sends it as a JSON field. It must match Script Property `APP_ACCESS_KEY`.
+- Return `UNAUTHORIZED` and skip sheet reads and writes when the key is missing, wrong, or the property is unset.
 - Validate all inbound payloads on the backend.
 - Prefer allowlisted actions.
 - Return JSON only.

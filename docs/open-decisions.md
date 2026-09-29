@@ -149,7 +149,7 @@ Status: Resolved
 
 1. Decision needed: How API access is constrained in deployed Apps Script.
 2. Why it matters: Security requirement forbids exposing private credentials and requires safe backend write access.
-3. Decision for MVP: Keep the web app executable by anyone (a Google-login wall breaks the public site) and require a shared `APP_ACCESS_KEY` script property on every request.
+3. Decision for MVP: Keep the web app executable by anyone (a Google-login wall breaks the public site) and require `key` on every request. GET sends `key` as a query parameter. POST sends `key` as a JSON field. The value must match Script Property `APP_ACCESS_KEY`. The React app collects the key before loading data and keeps it in memory for the tab.
 4. Which agent depends on it: budget-sheets-api, budget-integration, budget-qa-test.
 5. Can implementation proceed with default: Yes (Resolved).
 
