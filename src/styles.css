@@ -48,6 +48,27 @@ textarea {
   padding: 1rem 1rem 2.25rem;
 }
 
+.access-gate {
+  width: 100%;
+  max-width: 24rem;
+  margin: 4rem auto;
+  padding: 1.25rem;
+}
+
+.access-gate form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.access-gate input {
+  min-height: 2.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border);
+  padding: 0.55rem 0.75rem;
+  background: white;
+  color: var(--ink);
+}
+
 .app-nav {
   display: flex;
   justify-content: space-between;

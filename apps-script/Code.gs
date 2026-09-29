@@ -1,8 +1,7 @@
-// Security note:
-// This web app must be deployed as owner-only for MVP:
-// - Execute as: Me
-// - Who has access: Only myself
-// Access control is enforced in deployment settings, not in code.
+// Access control:
+// Deploy as Execute as: Me, Who has access: Anyone.
+// "Only myself" forces a Google login redirect that the public site cannot complete.
+// Every request must send key matching Script Property APP_ACCESS_KEY.
 function doGet(e) {
   return routeRequest_("GET", e);
 }
@@ -15,6 +14,8 @@ function routeRequest_(method, e) {
   var requestId = Utilities.getUuid();
 
   try {
+    requireAccessKey_(method, e);
+
     var action = getAction_(method, e);
     if (!action) {
       return jsonError_(
@@ -61,6 +62,33 @@ function routeRequest_(method, e) {
   } catch (error) {
     return toApiErrorResponse_(error, requestId);
   }
+}
+
+function requireAccessKey_(method, e) {
+  var storedKey = PropertiesService.getScriptProperties().getProperty("APP_ACCESS_KEY");
+  var expected = storedKey ? String(storedKey).trim() : "";
+  if (!expected) {
+    throw apiError_("UNAUTHORIZED", "Access key is not configured.");
+  }
+
+  var provided = readAccessKey_(method, e);
+  if (!provided || provided !== expected) {
+    throw apiError_("UNAUTHORIZED", "Unauthorized.");
+  }
+}
+
+function readAccessKey_(method, e) {
+  var fromQuery = e && e.parameter ? String(e.parameter.key || "").trim() : "";
+  if (fromQuery) {
+    return fromQuery;
+  }
+
+  if (method !== "POST") {
+    return "";
+  }
+
+  var body = parseJsonBody_(e);
+  return body && body.key ? String(body.key).trim() : "";
 }
 
 function getAction_(method, e) {

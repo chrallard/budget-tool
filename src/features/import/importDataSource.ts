@@ -1,3 +1,4 @@
+import { getAccessKey } from "../../auth/accessKey";
 import {
   AppsScriptApiClient,
   type GetConfigResponse,
@@ -96,5 +97,5 @@ export function createImportDataSource(): ImportDataSource {
     throw new Error("VITE_APPS_SCRIPT_URL is required when VITE_USE_MOCK_IMPORT=false");
   }
 
-  return new AppsScriptImportDataSource(new AppsScriptApiClient(url));
+  return new AppsScriptImportDataSource(new AppsScriptApiClient(url, getAccessKey()));
 }

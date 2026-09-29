@@ -14,6 +14,7 @@ All endpoints return the shared envelope:
 
 ## Validations Implemented
 
+- Shared access key: every request must include `key` matching Script Property `APP_ACCESS_KEY`. Missing or wrong keys return `UNAUTHORIZED` before any sheet read or write.
 - Action allowlist and method/action compatibility.
 - `dashboard` month format validation (`YYYY-MM`).
 - `importBatch` body shape validation.

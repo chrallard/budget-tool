@@ -1,10 +1,14 @@
 import { useCallback, useState } from "react";
+import { AccessGate } from "./auth/AccessGate";
+import { requiresAccessKey } from "./auth/accessKey";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { CategoryTransactionsPage } from "./features/dashboard/CategoryTransactionsPage";
 import { ImportPage } from "./features/import/ImportPage";
 import type { DashboardData } from "./features/dashboard/types";
 
 export function App() {
+  const accessRequired = requiresAccessKey();
+  const [unlocked, setUnlocked] = useState(() => !accessRequired);
   const [activeView, setActiveView] = useState<"dashboard" | "import" | "category-transactions">(
     "dashboard",
   );
@@ -29,6 +33,10 @@ export function App() {
   const handleBackToDashboard = () => {
     setActiveView("dashboard");
   };
+
+  if (accessRequired && !unlocked) {
+    return <AccessGate onUnlocked={() => setUnlocked(true)} />;
+  }
 
   return (
     <div className="app-shell">

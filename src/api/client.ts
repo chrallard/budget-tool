@@ -127,8 +127,21 @@ export type ImportFingerprintRecord = {
   originalDescription?: string;
 };
 
+export class ApiRequestError extends Error {
+  readonly code: ApiError["error"]["code"];
+
+  constructor(code: ApiError["error"]["code"], message: string) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.code = code;
+  }
+}
+
 export class AppsScriptApiClient {
-  constructor(private readonly baseUrl: string) { }
+  constructor(
+    private readonly baseUrl: string,
+    private readonly accessKey = "",
+  ) { }
 
   private toNetworkError(action: string, error: unknown): Error {
     if (error instanceof TypeError) {
@@ -162,6 +175,9 @@ export class AppsScriptApiClient {
   private async get<T>(action: string, params: Record<string, string> = {}): Promise<T> {
     const url = new URL(this.baseUrl);
     url.searchParams.set("action", action);
+    if (this.accessKey) {
+      url.searchParams.set("key", this.accessKey);
+    }
     for (const [key, value] of Object.entries(params)) {
       url.searchParams.set(key, value);
     }
@@ -184,7 +200,7 @@ export class AppsScriptApiClient {
     try {
       response = await fetch(this.baseUrl, {
         method: "POST",
-        body: JSON.stringify(body),
+        body: JSON.stringify(this.accessKey ? { ...body, key: this.accessKey } : body),
       });
     } catch (error) {
       throw this.toNetworkError(action, error);
@@ -200,7 +216,7 @@ export class AppsScriptApiClient {
 
     const payload = (await response.json()) as ApiResponse<T>;
     if (!payload.ok) {
-      throw new Error(payload.error.message || `API ${action} failed`);
+      throw new ApiRequestError(payload.error.code, payload.error.message || `API ${action} failed`);
     }
 
     return payload.data;

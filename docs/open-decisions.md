@@ -149,7 +149,7 @@ Status: Resolved
 
 1. Decision needed: How API access is constrained in deployed Apps Script.
 2. Why it matters: Security requirement forbids exposing private credentials and requires safe backend write access.
-3. Recommended default for MVP: Restrict web app deployment to only the owner Google account (private access).
+3. Decision for MVP: Keep the web app executable by anyone (a Google-login wall breaks the public site) and require a shared `APP_ACCESS_KEY` script property on every request.
 4. Which agent depends on it: budget-sheets-api, budget-integration, budget-qa-test.
 5. Can implementation proceed with default: Yes (Resolved).
 
@@ -196,7 +196,7 @@ Status: Resolved
 3. Decision for MVP: Keep architecture unchanged and use a same-origin forwarding transport adapter at `/api/apps-script` as the approved verification path.
 4. Constraints preserved:
 	- logical architecture remains `React SPA -> Google Apps Script API -> Google Sheets`
-	- owner-only Apps Script auth remains in place
+	- shared access key remains required on every Apps Script request
 	- no action-name change
 	- no request or response schema change
 5. Which agent depends on it: budget-integration, budget-dashboard-ui, budget-import-review-ui, budget-qa-test.

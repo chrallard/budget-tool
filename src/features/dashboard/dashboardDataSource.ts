@@ -1,3 +1,4 @@
+import { getAccessKey } from "../../auth/accessKey";
 import {
   AppsScriptApiClient,
   type ApiBudgetTarget,
@@ -149,5 +150,5 @@ export function createDashboardDataSource(): DashboardDataSource {
     throw new Error("VITE_APPS_SCRIPT_URL is required when VITE_USE_MOCK_DASHBOARD=false");
   }
 
-  return new AppsScriptDashboardDataSource(new AppsScriptApiClient(url));
+  return new AppsScriptDashboardDataSource(new AppsScriptApiClient(url, getAccessKey()));
 }

@@ -73,7 +73,7 @@ Non-negotiable rules:
 
 - No private Google credentials in frontend source.
 - Sheet writes occur only through backend API.
-- Access controls for Apps Script deployment must be enforced in deployment config.
+- Access controls for Apps Script are a shared access key (`APP_ACCESS_KEY` script property). The web app stays executable by anyone so the public site can call it; requests without the key are rejected.
 
 ## UI Compatibility Note
 
@@ -84,7 +84,7 @@ Non-negotiable rules:
 ## Transport Acceptance Criteria
 
 - No browser CORS or auth-redirect failure for `config`, `dashboard`, `importFingerprints`, and `importBatch` when using the approved MVP verification path through `/api/apps-script`.
-- Owner-only Apps Script authentication remains preserved.
+- Apps Script rejects requests that do not include the shared access key.
 - No request or response schema drift is allowed from `docs/api-contract.md`.
 - Test evidence must include a passing adapter-path smoke run.
 

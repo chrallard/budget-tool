@@ -30,7 +30,7 @@ Both styles must conform to the same request and response schemas below.
 ## Transport Acceptance Criteria
 
 - No browser CORS or auth-redirect failure for `config`, `dashboard`, `importFingerprints`, and `importBatch` when called through `/api/apps-script`.
-- Owner-only Apps Script authentication remains preserved.
+- Apps Script rejects requests that do not include the shared access key.
 - No payload or schema drift is allowed from the request and response contracts below.
 - Test evidence must include a passing smoke run through the adapter path.
 
@@ -231,7 +231,7 @@ Response: `ApiResponse<PostImportBatchResponse>`
 
 ## Locked API Security Decision
 
-- Apps Script deployment access is owner-only (private to the user's Google account) for MVP.
+- Apps Script stays callable without a Google login and rejects every request whose `key` does not match Script Property `APP_ACCESS_KEY`.
 
 ## Locked API Routing Decision
 
