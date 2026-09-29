@@ -49,6 +49,7 @@ function normalizeDashboardData(config: GetConfigResponse, dashboard: GetDashboa
 export class AppsScriptDashboardDataSource implements DashboardDataSource {
   private cachedConfig: GetConfigResponse | null = null;
   private inFlightConfig: Promise<GetConfigResponse> | null = null;
+  private readonly cachedDashboardByMonth = new Map<string, DashboardData>();
   private readonly inFlightDashboardByMonth = new Map<string, Promise<DashboardData>>();
 
   constructor(private readonly client: AppsScriptApiClient) { }
@@ -105,14 +106,24 @@ export class AppsScriptDashboardDataSource implements DashboardDataSource {
   }
 
   async getDashboardData(month: string): Promise<DashboardData> {
+    const cached = this.cachedDashboardByMonth.get(month);
+    if (cached) {
+      return cached;
+    }
+
     const existingRequest = this.inFlightDashboardByMonth.get(month);
     if (existingRequest) {
       return existingRequest;
     }
 
-    const request = this.loadDashboardData(month).finally(() => {
-      this.inFlightDashboardByMonth.delete(month);
-    });
+    const request = this.loadDashboardData(month)
+      .then((data) => {
+        this.cachedDashboardByMonth.set(month, data);
+        return data;
+      })
+      .finally(() => {
+        this.inFlightDashboardByMonth.delete(month);
+      });
 
     this.inFlightDashboardByMonth.set(month, request);
     return request;

@@ -32,9 +32,11 @@ export function DashboardPage({
     [dataSource],
   );
   const [selectedMonth, setSelectedMonth] = useState<string>(() => getCurrentMonth());
+  const [loadedMonth, setLoadedMonth] = useState<string | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -49,6 +51,7 @@ export function DashboardPage({
         }
 
         setDashboardData(data);
+        setLoadedMonth(selectedMonth);
         onDataLoaded?.(selectedMonth, data);
       })
       .catch((err) => {
@@ -67,22 +70,27 @@ export function DashboardPage({
     return () => {
       active = false;
     };
-  }, [onDataLoaded, resolvedDataSource, selectedMonth]);
+  }, [onDataLoaded, reloadToken, resolvedDataSource, selectedMonth]);
+
+  const displayedMonth = loadedMonth ?? selectedMonth;
 
   const months = useMemo(() => {
-    if (!dashboardData) {
-      return [selectedMonth];
+    let knownMonths = [displayedMonth];
+    if (dashboardData?.availableMonths && dashboardData.availableMonths.length > 0) {
+      knownMonths = dashboardData.availableMonths;
+    } else if (dashboardData) {
+      knownMonths = collectAvailableMonths(dashboardData.expenses, dashboardData.income, displayedMonth);
     }
 
-    if (dashboardData.availableMonths && dashboardData.availableMonths.length > 0) {
-      return dashboardData.availableMonths;
+    if (knownMonths.includes(selectedMonth)) {
+      return knownMonths;
     }
 
-    return collectAvailableMonths(dashboardData.expenses, dashboardData.income, selectedMonth);
-  }, [dashboardData, selectedMonth]);
+    return [selectedMonth, ...knownMonths].sort((left, right) => right.localeCompare(left));
+  }, [dashboardData, displayedMonth, selectedMonth]);
 
   const cards = useMemo(() => {
-    if (!dashboardData) {
+    if (!dashboardData || !loadedMonth) {
       return [];
     }
 
@@ -90,58 +98,67 @@ export function DashboardPage({
       dashboardData.expenseCategories,
       dashboardData.budgetTargets,
       dashboardData.expenses,
-      selectedMonth,
+      loadedMonth,
     );
-  }, [dashboardData, selectedMonth]);
+  }, [dashboardData, loadedMonth]);
 
   const summary = useMemo(() => {
-    if (!dashboardData) {
+    if (!dashboardData || !loadedMonth) {
       return null;
     }
 
-    return calculateDashboardSummary(selectedMonth, dashboardData.expenses, dashboardData.income, cards);
-  }, [dashboardData, cards, selectedMonth]);
+    return calculateDashboardSummary(loadedMonth, dashboardData.expenses, dashboardData.income, cards);
+  }, [dashboardData, cards, loadedMonth]);
 
-  if (isLoading) {
-    return (
-      <main className="dashboard-page">
-        <LoadingIndicator label="Loading dashboard" centered />
-      </main>
-    );
-  }
+  const retryLoad = () => {
+    setReloadToken((value) => value + 1);
+  };
 
-  if (error) {
+  if (!dashboardData || !loadedMonth || !summary) {
+    if (isLoading) {
+      return (
+        <main className="dashboard-page">
+          <LoadingIndicator label="Loading dashboard" centered />
+        </main>
+      );
+    }
+
     return (
       <main className="dashboard-page">
         <section className="dashboard-error" role="alert">
           <h1>Dashboard unavailable</h1>
-          <p>{error}</p>
+          <p>{error ?? "No dashboard data was returned."}</p>
           <p>Check API connectivity and retry.</p>
-        </section>
-      </main>
-    );
-  }
-
-  if (!dashboardData || !summary) {
-    return (
-      <main className="dashboard-page">
-        <section className="dashboard-error" role="alert">
-          <h1>Dashboard unavailable</h1>
-          <p>No dashboard data was returned.</p>
+          <button type="button" className="primary-button" onClick={retryLoad}>
+            Retry
+          </button>
         </section>
       </main>
     );
   }
 
   return (
-    <main className="dashboard-page content-fade-in" style={{ overflowX: "hidden" }}>
+    <main className="dashboard-page content-fade-in" style={{ overflowX: "hidden" }} aria-busy={isLoading}>
       <header className="dashboard-hero">
         <div>
           <p className="dashboard-eyebrow">Budget Dashboard</p>
-          <h1>{formatMonthLabel(selectedMonth)}</h1>
+          <h1>{formatMonthLabel(loadedMonth)}</h1>
         </div>
-        <MonthSelector selectedMonth={selectedMonth} months={months} onChange={setSelectedMonth} />
+        <div className="dashboard-hero__controls">
+          {isLoading ? <LoadingIndicator label={`Loading ${formatMonthLabel(selectedMonth)}`} /> : null}
+          <MonthSelector selectedMonth={selectedMonth} months={months} onChange={setSelectedMonth} />
+        </div>
       </header>
+
+      {error ? (
+        <section className="dashboard-error" role="alert">
+          <h2>Could not load {formatMonthLabel(selectedMonth)}</h2>
+          <p>{error}</p>
+          <button type="button" className="primary-button" onClick={retryLoad}>
+            Retry
+          </button>
+        </section>
+      ) : null}
 
       <SummaryCards summary={summary} />
 
@@ -151,7 +168,7 @@ export function DashboardPage({
             key={card.category}
             card={card}
             onClick={
-              onCategorySelected ? () => onCategorySelected(card.category, selectedMonth) : undefined
+              onCategorySelected ? () => onCategorySelected(card.category, loadedMonth) : undefined
             }
           />
         ))}

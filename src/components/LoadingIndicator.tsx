@@ -9,7 +9,7 @@ export function LoadingIndicator({ label, centered = false }: Readonly<LoadingIn
     : "loading-indicator";
 
   return (
-    <div className={className} role="status" aria-live="polite">
+    <div className={className} role="status" aria-live="polite" aria-label={label}>
       <span className="loading-indicator__shimmer" aria-hidden="true">
         <span className="loading-indicator__shine" />
       </span>
