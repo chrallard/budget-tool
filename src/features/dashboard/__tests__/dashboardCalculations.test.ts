@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   calculateCategoryCards,
   calculateDashboardSummary,
+  calculateMonthProfit,
   filterExpensesByMonth,
+  previousMonth,
 } from "../dashboardCalculations";
 import type { BudgetTarget, ExpenseRow, IncomeRow } from "../types";
 
@@ -71,6 +73,12 @@ describe("dashboard calculations", () => {
     expect(summary.totalSpending).toBe(1930);
     expect(summary.totalIncome).toBe(3200);
     expect(summary.profit).toBe(1270);
+  });
+
+  it("uses the previous month's profit as money to work with", () => {
+    expect(previousMonth("2026-09")).toBe("2026-08");
+    expect(previousMonth("2026-01")).toBe("2025-12");
+    expect(calculateMonthProfit("2026-04", expenses, income)).toBe(3200 - 999);
   });
 
   it("orders category cards by used spending in descending order", () => {

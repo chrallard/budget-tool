@@ -12,6 +12,18 @@ export function getCurrentMonth(now: Date = new Date()): string {
   return `${year}-${month}`;
 }
 
+export function previousMonth(month: string): string {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const date = new Date(year, monthNumber - 2, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export function calculateMonthProfit(month: string, expenses: ExpenseRow[], income: IncomeRow[]): number {
+  const totalSpending = filterExpensesByMonth(expenses, month).reduce((sum, row) => sum + row.amount, 0);
+  const totalIncome = filterIncomeByMonth(income, month).reduce((sum, row) => sum + row.amount, 0);
+  return totalIncome - totalSpending;
+}
+
 export function parseSheetDateToMonth(date: string): string | undefined {
   const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(date);
   if (!match) {
@@ -92,7 +104,7 @@ export function calculateDashboardSummary(
   const totalSpending = filterExpensesByMonth(expenses, month).reduce((sum, row) => sum + row.amount, 0);
   const totalIncome = filterIncomeByMonth(income, month).reduce((sum, row) => sum + row.amount, 0);
   const spendingLeft = expectedSpending - totalSpending;
-  const profit = totalIncome - totalSpending;
+  const profit = calculateMonthProfit(month, expenses, income);
 
   return {
     month,

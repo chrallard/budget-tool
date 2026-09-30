@@ -236,9 +236,34 @@ describe("DashboardPage", () => {
     await user.click(screen.getByRole("button", { name: "Retry" }));
 
     expect(await screen.findByRole("heading", { name: "Food" })).toBeInTheDocument();
-    expect(getDashboardData).toHaveBeenCalledTimes(2);
+    expect(getDashboardData).toHaveBeenCalledTimes(3);
     expect(getDashboardData).toHaveBeenNthCalledWith(1, month);
     expect(getDashboardData).toHaveBeenNthCalledWith(2, month);
+    expect(getDashboardData).toHaveBeenNthCalledWith(3, shiftMonth(month, -1));
+  });
+
+  it("shows last month's profit as money to work with", async () => {
+    const month = getCurrentMonth();
+    const prior = shiftMonth(month, -1);
+    const dataSource = createStubDataSource(async (requestedMonth) => ({
+      month: requestedMonth,
+      expenseCategories: ["Food"],
+      budgetTargets: [],
+      expenses:
+        requestedMonth === prior
+          ? [{ date: sheetDate(prior), category: "Food", amount: 800 }]
+          : [{ date: sheetDate(month), category: "Food", amount: 100 }],
+      income:
+        requestedMonth === prior
+          ? [{ date: sheetDate(prior), category: "Salary", amount: 5000 }]
+          : [{ date: sheetDate(month), category: "Salary", amount: 1000 }],
+    }));
+
+    render(<DashboardPage dataSource={dataSource} />);
+
+    const workingCapital = await screen.findByRole("region", { name: `${formatMonthLabel(prior)} profit` });
+    expect(workingCapital).toHaveTextContent("$4,200.00");
+    expect(workingCapital).toHaveTextContent("spending, investing, or paying down the mortgage");
   });
 
   it("shows over-budget state and no-budget-target state", async () => {

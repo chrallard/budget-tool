@@ -330,6 +330,22 @@ h1 {
   background: #fff;
 }
 
+.working-capital {
+  margin-bottom: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: linear-gradient(160deg, var(--surface), #fff);
+}
+
+.working-capital__amount {
+  margin: 0.2rem 0 0.35rem;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
 .summary-grid,
 .category-grid {
   display: grid;
