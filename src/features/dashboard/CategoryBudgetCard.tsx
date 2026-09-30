@@ -8,47 +8,40 @@ type CategoryBudgetCardProps = {
 };
 
 export function CategoryBudgetCard({ card, onClick }: Readonly<CategoryBudgetCardProps>) {
+  const budgetLabel = card.budgetTarget === undefined ? "No target" : formatCurrency(card.budgetTarget);
+  const remainingLabel = card.remaining === undefined ? "No target" : formatCurrency(card.remaining);
   const content = (
     <>
-      <header className="category-card__header">
-        <h3>{card.category}</h3>
-        {card.isOverBudget ? <span className="category-card__pill">Over budget</span> : null}
-      </header>
-
-      {card.budgetTarget === undefined ? (
-        <p className="category-card__no-target">No budget target set for this category.</p>
-      ) : (
-        <p className="category-card__target">Budget: {formatCurrency(card.budgetTarget)}</p>
-      )}
-
-      <div className="category-card__stats">
+      <h3>{card.category}</h3>
+      <div className="category-card__figures">
+        <div className="category-card__budget">
+          <span>Budget</span>
+          <strong>{budgetLabel}</strong>
+        </div>
         <div>
-          <span className="category-card__label">Used</span>
+          <span>Spent</span>
           <strong>{formatCurrency(card.used)}</strong>
         </div>
         <div>
-          <span className="category-card__label">Remaining</span>
-          <strong className={card.isOverBudget ? "category-card__negative" : ""}>
-            {card.remaining === undefined ? "No target" : formatCurrency(card.remaining)}
-          </strong>
+          <span>Remaining</span>
+          <strong className={card.isOverBudget ? "category-card__negative" : undefined}>{remainingLabel}</strong>
         </div>
       </div>
-
-      <BudgetProgress progressPct={card.progressPct} isOverBudget={card.isOverBudget} />
+      {card.budgetTarget === undefined ? null : (
+        <BudgetProgress progressPct={card.progressPct} isOverBudget={card.isOverBudget} />
+      )}
     </>
   );
 
+  const className = `category-card${onClick ? " category-card--button" : ""}${card.isOverBudget ? " category-card--over" : ""}`;
+
   if (onClick) {
     return (
-      <button
-        type="button"
-        className={`category-card category-card--button ${card.isOverBudget ? "category-card--over" : ""}`}
-        onClick={onClick}
-      >
+      <button type="button" className={className} onClick={onClick}>
         {content}
       </button>
     );
   }
 
-  return <article className={`category-card ${card.isOverBudget ? "category-card--over" : ""}`}>{content}</article>;
+  return <article className={className}>{content}</article>;
 }

@@ -93,7 +93,7 @@ describe("DashboardPage", () => {
     render(<DashboardPage dataSource={dataSource} />);
 
     const currentCard = await screen.findByRole("heading", { name: "Food" });
-    expect(within(currentCard.closest("article") as HTMLElement).getByText("$300.00")).toBeInTheDocument();
+    expect(within(currentCard.closest("article") as HTMLElement).getByText("$200.00")).toBeInTheDocument();
 
     const select = screen.getByLabelText("Month");
     await user.selectOptions(select, previousMonth);
@@ -101,7 +101,7 @@ describe("DashboardPage", () => {
     expect(getDashboardData).toHaveBeenCalledWith(previousMonth);
 
     const previousCard = getCategoryCard("Food");
-    expect(await within(previousCard).findByText("$100.00")).toBeInTheDocument();
+    expect(await within(previousCard).findByText("$400.00")).toBeInTheDocument();
   });
 
   it("keeps the loaded month visible while the next month loads", async () => {
@@ -132,12 +132,12 @@ describe("DashboardPage", () => {
     expect(
       await screen.findByRole("heading", { level: 1, name: formatMonthLabel(initialMonth) }),
     ).toBeInTheDocument();
-    expect(within(getCategoryCard("Food")).getByText("$300.00")).toBeInTheDocument();
+    expect(within(getCategoryCard("Food")).getByText("$200.00")).toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText("Month"), otherMonth);
 
     expect(screen.getByRole("heading", { level: 1, name: formatMonthLabel(initialMonth) })).toBeInTheDocument();
-    expect(within(getCategoryCard("Food")).getByText("$300.00")).toBeInTheDocument();
+    expect(within(getCategoryCard("Food")).getByText("$200.00")).toBeInTheDocument();
     expect(screen.getByRole("status", { name: `Loading ${formatMonthLabel(otherMonth)}` })).toBeInTheDocument();
     expect(screen.getByLabelText("Month")).toHaveValue(otherMonth);
 
@@ -154,7 +154,7 @@ describe("DashboardPage", () => {
     expect(
       await screen.findByRole("heading", { level: 1, name: formatMonthLabel(otherMonth) }),
     ).toBeInTheDocument();
-    expect(within(getCategoryCard("Food")).getByText("$100.00")).toBeInTheDocument();
+    expect(within(getCategoryCard("Food")).getByText("$400.00")).toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
@@ -202,14 +202,14 @@ describe("DashboardPage", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Sheet read failed");
     expect(screen.getByRole("heading", { level: 1, name: formatMonthLabel(initialMonth) })).toBeInTheDocument();
-    expect(within(getCategoryCard("Food")).getByText("$300.00")).toBeInTheDocument();
+    expect(within(getCategoryCard("Food")).getByText("$200.00")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Retry" }));
 
     expect(
       await screen.findByRole("heading", { level: 1, name: formatMonthLabel(otherMonth) }),
     ).toBeInTheDocument();
-    expect(within(getCategoryCard("Food")).getByText("$80.00")).toBeInTheDocument();
+    expect(within(getCategoryCard("Food")).getByText("$420.00")).toBeInTheDocument();
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
@@ -281,8 +281,17 @@ describe("DashboardPage", () => {
 
     render(<DashboardPage dataSource={dataSource} />);
 
-    expect(await screen.findByText("Over budget")).toBeInTheDocument();
-    expect(screen.getByText("No budget target set for this category.")).toBeInTheDocument();
+    const rent = (await screen.findByRole("heading", { name: "Rent" })).closest(".category-card");
+    expect(rent).toHaveClass("category-card--over");
+    expect(rent).toHaveTextContent("Budget");
+    expect(rent).toHaveTextContent("$1,200.00");
+    expect(rent).toHaveTextContent("Spent");
+    expect(rent).toHaveTextContent("$1,400.00");
+    expect(rent).toHaveTextContent("Remaining");
+    expect(rent).toHaveTextContent("-$200.00");
+    const pets = screen.getByRole("heading", { name: "Pets" }).closest(".category-card");
+    expect(pets).toHaveTextContent("No target");
+    expect(pets).toHaveTextContent("$50.00");
     expect(screen.getByRole("heading", { name: "Expected Spending" }).closest("article")).toHaveTextContent(
       "$1,200.00",
     );
