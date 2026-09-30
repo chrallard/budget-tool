@@ -584,10 +584,41 @@ h1 {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(254, 246, 228, 0.95));
 }
 
+.transaction-card__header {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.transaction-card__identity {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.transaction-card__title,
+.transaction-card__original {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.transaction-card__title {
+  -webkit-line-clamp: 2;
+  min-height: 2.5em;
+  max-height: 2.5em;
+}
+
+.transaction-card__original {
+  -webkit-line-clamp: 1;
+  margin: 0.25rem 0 0;
+}
+
 .transaction-card__amounts {
   display: grid;
   justify-items: end;
   gap: 0.2rem;
+  flex: 0 0 auto;
 }
 
 .transaction-card__amounts strong {

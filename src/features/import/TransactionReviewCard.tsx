@@ -64,11 +64,15 @@ export function TransactionReviewCard({
   return (
     <article className="transaction-card" aria-label="Pending transaction review">
       <header className="transaction-card__header">
-        <div>
+        <div className="transaction-card__identity">
           <p className="dashboard-eyebrow">{formatDirection(transaction.direction)}</p>
-          <h2>{displayName}</h2>
+          <h2 className="transaction-card__title" title={displayName}>
+            {displayName}
+          </h2>
           {hasDisplayNameOverride ? (
-            <p className="dashboard-muted">Original: {transaction.originalDescription}</p>
+            <p className="dashboard-muted transaction-card__original" title={transaction.originalDescription}>
+              Original: {transaction.originalDescription}
+            </p>
           ) : null}
         </div>
         <div className="transaction-card__amounts">
