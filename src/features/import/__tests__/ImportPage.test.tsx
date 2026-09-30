@@ -5,6 +5,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { PostImportBatchRequest, PostImportBatchResponse } from "../../../api/client";
+import { fingerprintTransaction } from "../../../lib/import/fingerprintTransaction";
 import { ImportPage } from "../ImportPage";
 import type { ImportDataSource } from "../importDataSource";
 
@@ -165,6 +166,42 @@ describe("ImportPage", () => {
     await user.click(screen.getByRole("button", { name: "Mark internal transfer" }));
     expect(await screen.findByText("Review complete")).toBeInTheDocument();
     expect(screen.getByText("ignored")).toBeInTheDocument();
+  });
+
+  it("leaves a previously skipped transaction out of review", async () => {
+    const user = userEvent.setup();
+    const skippedFingerprint = fingerprintTransaction({
+      sourceAccount: "chequing",
+      originalDate: "2026-05-01",
+      originalAmount: -10,
+      normalizedDescription: "LOBLAWS123",
+    });
+
+    render(
+      <ImportPage
+        dataSource={createDataSource({
+          async getImportReviewContext() {
+            return {
+              expenseCategories: ["Food", "Food out", "Coffee out", "Other"],
+              incomeCategories: ["Salary", "Other"],
+              existingRecords: [],
+              skippedFingerprints: [skippedFingerprint],
+            };
+          },
+        })}
+      />,
+    );
+
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
+    const csv = csvWithRows([
+      'CHEQUING,123,05/01/2026,,LOBLAWS 123,,"-10.00",',
+      'CHEQUING,123,05/02/2026,,ACCOUNT TRANSFER SAVINGS,,"-25.00",',
+    ]);
+    await user.upload(input, new File([csv], "again.csv", { type: "text/csv" }));
+
+    expect(await screen.findByRole("heading", { name: "ACCOUNT TRANSFER SAVINGS" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "LOBLAWS 123" })).not.toBeInTheDocument();
+    expect(screen.getByText(/previously skipped transaction/)).toBeInTheDocument();
   });
 
   it("sorts category options alphabetically in the import dropdown", async () => {

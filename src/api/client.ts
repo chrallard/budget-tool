@@ -47,6 +47,7 @@ export type GetConfigResponse = {
 
 export type GetImportFingerprintsResponse = {
   records: ImportFingerprintRecord[];
+  skippedFingerprints?: string[];
 };
 
 export type ImportBatchTransaction = {
@@ -69,6 +70,7 @@ export type PostImportBatchRequest = {
   action?: "importBatch";
   month?: string;
   approvedTransactions: ImportBatchTransaction[];
+  skippedFingerprints?: string[];
 };
 
 export type PostImportBatchResponse = {

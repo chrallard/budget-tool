@@ -303,4 +303,56 @@ describe("reviewState", () => {
     const finished = finishSubmission(initial, { expenses: 1, income: 0 });
     expect(finished.submission.successMessage).toContain("Imported 1 transactions successfully.");
   });
+
+  it("leaves remembered fingerprints out of the pending queue and sends them on submit", () => {
+    const initial = createImportReviewState({
+      sourceAccount: "chequing",
+      fileName: "rbc.csv",
+      config: {
+        expenseCategories: ["Dining"],
+        incomeCategories: ["Salary"],
+      },
+      rememberedFingerprints: ["chequing|2026-05-01|-14.25|COFFEE SHOP"],
+      transactions: [
+        createTransaction({ id: "remembered" }),
+        createTransaction({
+          id: "fresh",
+          importFingerprint: "chequing|2026-05-02|-8.00|GROCERY",
+          originalDescription: "Grocery",
+        }),
+      ],
+    });
+
+    expect(getCurrentTransaction(initial)?.id).toBe("fresh");
+    expect(initial.transactions[0]?.status).toBe("skipped");
+
+    const skipped = skipTransaction(initial, "fresh");
+    const payload = buildApprovedImportBatch(skipped);
+
+    expect(payload.approvedTransactions).toEqual([]);
+    expect(payload.skippedFingerprints).toEqual([
+      "chequing|2026-05-01|-14.25|COFFEE SHOP",
+      "chequing|2026-05-02|-8.00|GROCERY",
+    ]);
+  });
+
+  it("drops a remembered fingerprint once that transaction is approved", () => {
+    const initial = createImportReviewState({
+      sourceAccount: "chequing",
+      fileName: "rbc.csv",
+      config: {
+        expenseCategories: ["Dining"],
+        incomeCategories: ["Salary"],
+      },
+      rememberedFingerprints: ["chequing|2026-05-01|-14.25|COFFEE SHOP"],
+      transactions: [createTransaction({ id: "remembered", selectedCategory: "Dining" })],
+    });
+
+    const reopened = reopenTransaction(initial, "remembered");
+    const approved = approveTransaction(reopened, "remembered");
+    const payload = buildApprovedImportBatch(approved);
+
+    expect(payload.approvedTransactions).toHaveLength(1);
+    expect(payload.skippedFingerprints).toEqual([]);
+  });
 });

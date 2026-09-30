@@ -9,7 +9,7 @@ The MVP must use and preserve only these tabs:
 - `Income`
 - `Budget Targets`
 
-No additional tab is required for MVP.
+No additional user-facing tab is required. The importer may create a hidden `Skipped` tab that stores fingerprints of skipped and ignored transactions so a later import does not ask about them again.
 
 ## Expenses Tab Contract
 
@@ -115,6 +115,7 @@ Rules:
 ## Data Behavior Rules
 
 - Ignored and skipped transactions are not written to `Expenses` or `Income`.
+- Their import fingerprints are stored on the hidden `Skipped` tab when the batch is submitted. A later import leaves those fingerprints out of review. Approving one later removes its fingerprint from `Skipped`.
 - Internal transfers and credit card payments should be marked ignored and not written.
 - Refunds are represented as negative expenses and reduce spending.
 - Duplicate detection relies on metadata, especially `Import Fingerprint`.

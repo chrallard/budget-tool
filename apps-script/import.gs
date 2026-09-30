@@ -4,6 +4,7 @@ function handleImportBatchAction_(e, requestId) {
   var body = parseJsonBody_(e);
   var categories = readCategorySetup_();
   var approvedTransactions = validateImportBatchRequest_(body, categories);
+  var skippedFingerprints = validateSkippedFingerprints_(body);
 
   var expensesSheet = getSheetOrThrow_(APP_CONFIG.SHEETS.EXPENSES);
   var incomeSheet = getSheetOrThrow_(APP_CONFIG.SHEETS.INCOME);
@@ -12,6 +13,7 @@ function handleImportBatchAction_(e, requestId) {
   var incomeHeaders = ensureMetadataHeadersAndHide_(incomeSheet, APP_CONFIG.HEADERS.INCOME_VISIBLE);
 
   var nowIso = new Date().toISOString();
+  var writtenFingerprints = [];
   var result = {
     written: {
       expenses: 0,
@@ -27,6 +29,7 @@ function handleImportBatchAction_(e, requestId) {
 
     try {
       writeApprovedTransaction_(tx, expensesSheet, incomeSheet, expensesHeaders, incomeHeaders, nowIso);
+      writtenFingerprints.push(String(tx.importFingerprint).trim());
 
       if (tx.direction === "expense") {
         result.written.expenses += 1;
@@ -54,7 +57,143 @@ function handleImportBatchAction_(e, requestId) {
     sortSheetRowsByDateDesc_(incomeSheet, incomeHeaders);
   }
 
+  forgetSkippedFingerprints_(writtenFingerprints);
+  rememberSkippedFingerprints_(skippedFingerprints, writtenFingerprints);
+
   return jsonSuccess_(result, requestId);
+}
+
+function validateSkippedFingerprints_(body) {
+  if (body.skippedFingerprints === undefined || body.skippedFingerprints === null) {
+    return [];
+  }
+
+  if (!Array.isArray(body.skippedFingerprints)) {
+    throw apiError_("VALIDATION_ERROR", "skippedFingerprints must be an array.");
+  }
+
+  var fingerprints = [];
+  var seen = {};
+
+  for (var i = 0; i < body.skippedFingerprints.length; i += 1) {
+    var fingerprint = String(body.skippedFingerprints[i] || "").trim();
+    if (!fingerprint) {
+      throw apiError_("VALIDATION_ERROR", "skippedFingerprints entries must be non-empty strings.");
+    }
+    if (fingerprint.length > 500) {
+      throw apiError_("VALIDATION_ERROR", "skippedFingerprints entries are too long.");
+    }
+    if (!seen[fingerprint]) {
+      seen[fingerprint] = true;
+      fingerprints.push(fingerprint);
+    }
+  }
+
+  return fingerprints;
+}
+
+function readSkippedFingerprints_() {
+  var sheet = getSpreadsheet_().getSheetByName(APP_CONFIG.SHEETS.SKIPPED);
+  if (!sheet) {
+    return [];
+  }
+
+  var values = sheet.getDataRange().getValues();
+  var fingerprints = [];
+
+  for (var i = 1; i < values.length; i += 1) {
+    var fingerprint = String(values[i][0] || "").trim();
+    if (fingerprint) {
+      fingerprints.push(fingerprint);
+    }
+  }
+
+  return fingerprints;
+}
+
+function getOrCreateSkippedSheet_() {
+  var spreadsheet = getSpreadsheet_();
+  var sheet = spreadsheet.getSheetByName(APP_CONFIG.SHEETS.SKIPPED);
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(APP_CONFIG.SHEETS.SKIPPED);
+    sheet.getRange(1, 1).setValue("Import Fingerprint");
+    sheet.hideSheet();
+  }
+
+  return sheet;
+}
+
+function rememberSkippedFingerprints_(fingerprints, excludedFingerprints) {
+  var excluded = {};
+  var i;
+
+  for (i = 0; i < excludedFingerprints.length; i += 1) {
+    if (excludedFingerprints[i]) {
+      excluded[excludedFingerprints[i]] = true;
+    }
+  }
+
+  var toStore = [];
+  for (i = 0; i < fingerprints.length; i += 1) {
+    if (!excluded[fingerprints[i]]) {
+      toStore.push(fingerprints[i]);
+    }
+  }
+
+  if (toStore.length === 0) {
+    return;
+  }
+
+  var sheet = getOrCreateSkippedSheet_();
+  var existing = {};
+  var values = sheet.getDataRange().getValues();
+
+  for (i = 1; i < values.length; i += 1) {
+    var current = String(values[i][0] || "").trim();
+    if (current) {
+      existing[current] = true;
+    }
+  }
+
+  var rows = [];
+  for (i = 0; i < toStore.length; i += 1) {
+    if (!existing[toStore[i]]) {
+      existing[toStore[i]] = true;
+      rows.push([toStore[i]]);
+    }
+  }
+
+  if (rows.length === 0) {
+    return;
+  }
+
+  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 1).setValues(rows);
+}
+
+function forgetSkippedFingerprints_(fingerprints) {
+  if (!fingerprints || fingerprints.length === 0) {
+    return;
+  }
+
+  var sheet = getSpreadsheet_().getSheetByName(APP_CONFIG.SHEETS.SKIPPED);
+  if (!sheet) {
+    return;
+  }
+
+  var drop = {};
+  for (var i = 0; i < fingerprints.length; i += 1) {
+    if (fingerprints[i]) {
+      drop[fingerprints[i]] = true;
+    }
+  }
+
+  var values = sheet.getDataRange().getValues();
+  for (var row = values.length; row >= 2; row -= 1) {
+    var fingerprint = String(values[row - 1][0] || "").trim();
+    if (drop[fingerprint]) {
+      sheet.deleteRow(row);
+    }
+  }
 }
 
 function writeApprovedTransaction_(tx, expensesSheet, incomeSheet, expensesHeaders, incomeHeaders, nowIso) {

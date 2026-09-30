@@ -129,7 +129,7 @@ Status: Resolved
 
 1. Decision needed: Whether ignored transactions are persisted anywhere in MVP.
 2. Why it matters: Impacts auditability and review-session restart behavior.
-3. Recommended default for MVP: Ignored transactions are skipped (not written to `Expenses` or `Income`) and not persisted in MVP.
+3. Decision: Skipped and ignored transactions are not written to `Expenses` or `Income`. Their fingerprints are stored on a hidden `Skipped` tab when the batch is submitted, and later imports leave those fingerprints out of review.
 4. Which agent depends on it: budget-import-review-ui, budget-integration, budget-qa-test.
 5. Can implementation proceed with default: Yes (Resolved).
 

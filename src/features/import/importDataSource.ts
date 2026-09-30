@@ -11,6 +11,7 @@ export type ImportReviewContext = {
   expenseCategories: string[];
   incomeCategories: string[];
   existingRecords: GetImportFingerprintsResponse["records"];
+  skippedFingerprints: string[];
 };
 
 export interface ImportDataSource {
@@ -50,6 +51,7 @@ export class AppsScriptImportDataSource implements ImportDataSource {
       expenseCategories: config.expenseCategories,
       incomeCategories: config.incomeCategories,
       existingRecords: fingerprints.records,
+      skippedFingerprints: fingerprints.skippedFingerprints ?? [],
     };
   }
 
@@ -71,6 +73,7 @@ export class MockImportDataSource implements ImportDataSource {
       ],
       incomeCategories: ["Salary", "Other"],
       existingRecords: [],
+      skippedFingerprints: [],
     };
   }
 

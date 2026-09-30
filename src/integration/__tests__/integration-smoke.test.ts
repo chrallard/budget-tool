@@ -165,4 +165,23 @@ describe("integration smoke", () => {
       "Unable to load duplicate metadata records: SHEET_READ_ERROR",
     );
   });
+
+  it("keeps skipped fingerprints from the fingerprint response", async () => {
+    const client = {
+      getConfig: vi.fn(async () => ({
+        expenseCategories: ["Food"],
+        incomeCategories: ["Salary"],
+        budgetTargets: [],
+      })),
+      getImportFingerprints: vi.fn(async () => ({
+        records: [],
+        skippedFingerprints: ["chequing|2026-05-01|-10.00|LOBLAWS123"],
+      })),
+    };
+
+    const dataSource = new AppsScriptImportDataSource(client as unknown as AppsScriptApiClient);
+    const context = await dataSource.getImportReviewContext();
+
+    expect(context.skippedFingerprints).toEqual(["chequing|2026-05-01|-10.00|LOBLAWS123"]);
+  });
 });

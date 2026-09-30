@@ -106,11 +106,11 @@ export function ImportPage({
     () => dataSource ?? createImportDataSource(),
     [dataSource],
   );
-  const [context, setContext] = useState<ImportReviewContext | null>(null);
   const [contextError, setContextError] = useState<string | null>(null);
   const [isLoadingContext, setIsLoadingContext] = useState(false);
   const [pageMessage, setPageMessage] = useState<string | null>(null);
   const [reviewState, setReviewState] = useState<ImportReviewState | null>(null);
+  const [previouslySkippedCount, setPreviouslySkippedCount] = useState(0);
 
   const counts = useMemo(() => (reviewState ? getReviewCounts(reviewState) : null), [reviewState]);
   const currentTransaction = useMemo(() => (reviewState ? getCurrentTransaction(reviewState) : null), [reviewState]);
@@ -123,8 +123,7 @@ export function ImportPage({
     try {
       let nextContext: ImportReviewContext;
       try {
-        nextContext = context ?? (await resolvedDataSource.getImportReviewContext());
-        setContext(nextContext);
+        nextContext = await resolvedDataSource.getImportReviewContext();
       } catch (error) {
         setReviewState(null);
         setContextError(toErrorMessage(error));
@@ -137,7 +136,12 @@ export function ImportPage({
         incomeCategories: nextContext.incomeCategories,
         existingRecords: nextContext.existingRecords,
       });
+      const rememberedFingerprints = nextContext.skippedFingerprints ?? [];
+      const remembered = new Set(rememberedFingerprints);
 
+      setPreviouslySkippedCount(
+        parsed.transactions.filter((transaction) => remembered.has(transaction.importFingerprint)).length,
+      );
       setReviewState(
         createImportReviewState({
           sourceAccount: parsed.sourceAccount,
@@ -147,6 +151,7 @@ export function ImportPage({
             incomeCategories: nextContext.incomeCategories,
           },
           fileName: file.name,
+          rememberedFingerprints,
         }),
       );
     } catch (error) {
@@ -270,6 +275,12 @@ export function ImportPage({
             </section>
           )}
 
+          {previouslySkippedCount > 0 ? (
+            <p className="dashboard-muted">
+              {previouslySkippedCount} previously skipped transaction{previouslySkippedCount === 1 ? "" : "s"} left out of this review. Reopen one below to import it.
+            </p>
+          ) : null}
+
           {reviewState.submission.error ? (
             <section className="dashboard-error" role="alert">
               <h2>Submission failed</h2>
@@ -280,7 +291,12 @@ export function ImportPage({
           <SubmitImportBatchButton
             approvedCount={counts.approved}
             pendingCount={counts.pending}
-            disabled={counts.pending > 0 || counts.approved === 0 || reviewState.submission.isSubmitting}
+            dismissedCount={counts.skipped + counts.ignored}
+            disabled={
+              counts.pending > 0 ||
+              (counts.approved === 0 && counts.skipped === 0 && counts.ignored === 0) ||
+              reviewState.submission.isSubmitting
+            }
             isSubmitting={reviewState.submission.isSubmitting}
             onSubmit={handleSubmit}
           />

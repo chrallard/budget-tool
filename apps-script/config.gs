@@ -9,7 +9,8 @@ var APP_CONFIG = {
     CATEGORY_SETUP: "Category Setup",
     EXPENSES: "Expenses",
     INCOME: "Income",
-    BUDGET_TARGETS: "Budget Targets"
+    BUDGET_TARGETS: "Budget Targets",
+    SKIPPED: "Skipped"
   },
   SHEET_HEADER_ROWS: {
     Expenses: 7,

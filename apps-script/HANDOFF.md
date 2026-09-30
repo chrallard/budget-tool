@@ -49,7 +49,8 @@ All endpoints return the shared envelope:
   - `Source Account`, `Original Date`, `Original Amount`, `Original Description`, `Import Fingerprint`, `Imported At`
 - Ensures metadata columns exist and auto-hides them.
 - Backfills existing blank `Entry Method` values to `Manual` on both tabs.
-- Skipped/ignored rows are not written because `approvedTransactions` payload is strictly validated.
+- Skipped/ignored rows are not written to `Expenses` or `Income`.
+- `importBatch` may include `skippedFingerprints`. Those fingerprints are stored on a hidden `Skipped` sheet. Approving a previously skipped fingerprint removes it. `importFingerprints` returns `skippedFingerprints`.
 
 ## Files Changed
 

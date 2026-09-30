@@ -239,7 +239,8 @@ function handleImportFingerprintsAction_() {
   );
 
   return {
-    records: records
+    records: records,
+    skippedFingerprints: readSkippedFingerprints_()
   };
 }
 

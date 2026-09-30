@@ -143,12 +143,23 @@ export function createImportReviewState(params: {
   transactions: NormalizedTransaction[];
   config: ReviewConfig;
   fileName: string;
+  rememberedFingerprints?: string[];
 }): ImportReviewState {
+  const remembered = new Set(params.rememberedFingerprints ?? []);
+
   return {
     sourceAccount: params.sourceAccount,
-    transactions: params.transactions.map((transaction) =>
-      sanitizeTransaction(transaction, params.config),
-    ),
+    transactions: params.transactions.map((transaction) => {
+      const sanitized = sanitizeTransaction(transaction, params.config);
+      if (sanitized.status === "pending" && remembered.has(sanitized.importFingerprint)) {
+        return {
+          ...sanitized,
+          status: "skipped" as const,
+        };
+      }
+
+      return sanitized;
+    }),
     config: params.config,
     fileName: params.fileName,
     submission: {
@@ -534,10 +545,23 @@ export function buildApprovedImportBatch(
       );
     });
 
+  const approvedFingerprints = new Set(
+    approvedTransactions.map((transaction) => transaction.importFingerprint),
+  );
+  const skippedFingerprints = [
+    ...new Set(
+      state.transactions
+        .filter((transaction) => transaction.status === "skipped" || transaction.status === "ignored")
+        .map((transaction) => transaction.importFingerprint)
+        .filter((fingerprint) => fingerprint.trim().length > 0 && !approvedFingerprints.has(fingerprint)),
+    ),
+  ];
+
   return {
     action: "importBatch",
     month,
     approvedTransactions,
+    skippedFingerprints,
   };
 }
 
