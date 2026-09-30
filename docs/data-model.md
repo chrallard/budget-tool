@@ -19,6 +19,12 @@ export type IgnoreReason =
 
 export type DuplicateStatus = "not_duplicate" | "possible_duplicate" | "confirmed_duplicate";
 
+export type TransactionSplit = {
+  id: string;
+  amount: number;
+  category?: string;
+};
+
 export type NormalizedTransaction = {
   id: string;
   sourceAccount: SourceAccount;
@@ -32,6 +38,7 @@ export type NormalizedTransaction = {
   direction: TransactionDirection;
   suggestedCategory?: string;
   selectedCategory?: string;
+  splits?: TransactionSplit[];
   notes?: string;
   status: TransactionStatus;
   ignoreReason?: IgnoreReason;
@@ -171,6 +178,8 @@ export type ImportBatch = {
   approvedTransactions: ApprovedImportTransaction[];
 };
 ```
+
+When an approved transaction has two or more `splits`, the batch contains one row per split. Each row keeps the parent date, description, original amount, and fingerprint, and uses that split's category and amount.
 
 ## Open Data-Model Decisions
 

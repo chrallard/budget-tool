@@ -309,6 +309,57 @@ describe("ImportPage", () => {
     expect(screen.getByRole("button", { name: "Reopen" })).toBeInTheDocument();
   });
 
+  it("splits one purchase into two categories before submit", async () => {
+    const user = userEvent.setup();
+    const submitImportBatch = vi.fn(async (request: PostImportBatchRequest) => ({
+      written: { expenses: request.approvedTransactions.length, income: 0 },
+      skipped: 0,
+      ignored: 0,
+      failures: [],
+    }));
+
+    render(
+      <ImportPage
+        dataSource={createDataSource({
+          submitImportBatch,
+          async getImportReviewContext() {
+            return {
+              expenseCategories: ["Food", "Home"],
+              incomeCategories: ["Salary"],
+              existingRecords: [],
+            };
+          },
+        })}
+      />,
+    );
+
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
+    const csv = csvWithRows([
+      'CHEQUING,123,05/01/2026,,COSTCO,,"-40.00",',
+    ]);
+    await user.upload(input, new File([csv], "split.csv", { type: "text/csv" }));
+
+    await user.click(await screen.findByRole("button", { name: "Split across categories" }));
+    const partOneAmount = screen.getByLabelText("Part 1 amount");
+    await user.clear(partOneAmount);
+    await user.type(partOneAmount, "25");
+    await user.type(screen.getByLabelText("Part 2 amount"), "15");
+    await user.selectOptions(screen.getByLabelText("Part 1 category"), "Food");
+    await user.selectOptions(screen.getByLabelText("Part 2 category"), "Home");
+
+    expect(screen.getByText("Remaining $0.00")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Approve transaction" }));
+    await user.click(screen.getByRole("button", { name: /submit 1 approved transaction/i }));
+
+    await waitFor(() => expect(submitImportBatch).toHaveBeenCalledTimes(1));
+    const rows = submitImportBatch.mock.calls[0]?.[0].approvedTransactions ?? [];
+    expect(rows).toEqual([
+      expect.objectContaining({ selectedCategory: "Food", editableAmount: 25, originalAmount: -40 }),
+      expect.objectContaining({ selectedCategory: "Home", editableAmount: 15, originalAmount: -40 }),
+    ]);
+    expect(rows[0]?.importFingerprint).toBe(rows[1]?.importFingerprint);
+  });
+
   it("uploads a TD CSV and uses the same review flow", async () => {
     const user = userEvent.setup();
     render(<ImportPage dataSource={createDataSource()} />);

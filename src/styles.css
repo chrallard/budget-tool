@@ -630,6 +630,27 @@ h1 {
   grid-column: 1 / -1;
 }
 
+.split-editor {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0.95rem;
+}
+
+.split-editor legend {
+  padding: 0 0.35rem;
+}
+
+.split-editor__row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 9rem) minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: end;
+}
+
 .duplicate-warning {
   margin: 1rem 0;
   border: 1px solid color-mix(in srgb, var(--warn) 25%, white);
@@ -895,7 +916,8 @@ h1 {
     align-items: stretch;
   }
 
-  .transaction-card__fields {
+  .transaction-card__fields,
+  .split-editor__row {
     grid-template-columns: 1fr;
   }
 

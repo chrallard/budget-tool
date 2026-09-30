@@ -2,20 +2,22 @@ type CategorySelectorProps = {
   categories: string[];
   selectedCategory?: string;
   onChange: (category: string) => void;
+  label?: string;
 };
 
 export function CategorySelector({
   categories,
   selectedCategory,
   onChange,
+  label = "Category",
 }: Readonly<CategorySelectorProps>) {
   const sortedCategories = [...categories].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
 
   return (
     <label className="review-field">
-      <span>Category</span>
+      <span>{label}</span>
       <select
-        aria-label="Category"
+        aria-label={label}
         value={selectedCategory ?? ""}
         onChange={(event) => onChange(event.currentTarget.value)}
       >

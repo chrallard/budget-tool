@@ -1,8 +1,16 @@
 import type { IgnoreReason, NormalizedTransaction } from "../../shared/types/transactions";
-import { canApproveTransaction, getAllowedCategories, hasOutstandingDuplicates, type ReviewConfig } from "./reviewState";
+import {
+  canApproveTransaction,
+  getActiveSplits,
+  getAllowedCategories,
+  getApprovalBlockReason,
+  hasOutstandingDuplicates,
+  type ReviewConfig,
+} from "./reviewState";
 import { CategorySelector } from "./CategorySelector";
 import { DuplicateWarning } from "./DuplicateWarning";
 import { IgnoreActions } from "./IgnoreActions";
+import { SplitEditor } from "./SplitEditor";
 
 type TransactionReviewCardProps = {
   transaction: NormalizedTransaction;
@@ -11,6 +19,12 @@ type TransactionReviewCardProps = {
   onAmountChange: (amount: number) => void;
   onDisplayNameOverrideChange: (value: string) => void;
   onNotesChange: (notes: string) => void;
+  onStartSplit: () => void;
+  onAddSplit: () => void;
+  onRemoveSplit: (splitId: string) => void;
+  onClearSplit: () => void;
+  onSplitAmountChange: (splitId: string, amount: number) => void;
+  onSplitCategoryChange: (splitId: string, category: string) => void;
   onApprove: () => void;
   onSkip: () => void;
   onIgnore: (reason: IgnoreReason) => void;
@@ -27,12 +41,20 @@ export function TransactionReviewCard({
   onAmountChange,
   onDisplayNameOverrideChange,
   onNotesChange,
+  onStartSplit,
+  onAddSplit,
+  onRemoveSplit,
+  onClearSplit,
+  onSplitAmountChange,
+  onSplitCategoryChange,
   onApprove,
   onSkip,
   onIgnore,
 }: Readonly<TransactionReviewCardProps>) {
   const categories = getAllowedCategories(transaction.direction, config);
+  const splits = getActiveSplits(transaction);
   const approvalBlocked = !canApproveTransaction(transaction, config);
+  const approvalBlockReason = getApprovalBlockReason(transaction, config);
   const nameFieldLabel = transaction.direction === "expense" ? "Store / Vendor" : "Source";
   const displayName = transaction.displayNameOverride?.trim()
     ? transaction.displayNameOverride.trim()
@@ -93,11 +115,31 @@ export function TransactionReviewCard({
           />
         </label>
 
-        <CategorySelector
-          categories={categories}
-          selectedCategory={transaction.selectedCategory}
-          onChange={onCategoryChange}
-        />
+        {splits ? (
+          <SplitEditor
+            transaction={transaction}
+            categories={categories}
+            splits={splits}
+            onAmountChange={onSplitAmountChange}
+            onCategoryChange={onSplitCategoryChange}
+            onAdd={onAddSplit}
+            onRemove={onRemoveSplit}
+            onClear={onClearSplit}
+          />
+        ) : (
+          <>
+            <CategorySelector
+              categories={categories}
+              selectedCategory={transaction.selectedCategory}
+              onChange={onCategoryChange}
+            />
+            <div className="review-field review-field--full">
+              <button type="button" className="ghost-button" onClick={onStartSplit}>
+                Split across categories
+              </button>
+            </div>
+          </>
+        )}
 
         <label className="review-field review-field--full">
           <span>Notes</span>
@@ -117,8 +159,8 @@ export function TransactionReviewCard({
           ) : (
             <p className="dashboard-muted">No valid suggested category was found for this transaction.</p>
           )}
-          {approvalBlocked ? (
-            <p className="transaction-card__validation">Select a valid category and keep a valid amount before approval.</p>
+          {approvalBlockReason ? (
+            <p className="transaction-card__validation">{approvalBlockReason}</p>
           ) : null}
         </div>
 

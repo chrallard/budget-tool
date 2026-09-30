@@ -12,20 +12,26 @@ import { ImportProgress } from "./ImportProgress";
 import { SubmitImportBatchButton } from "./SubmitImportBatchButton";
 import { TransactionReviewCard } from "./TransactionReviewCard";
 import {
+  addTransactionSplit,
   approveTransaction,
   buildApprovedImportBatch,
+  clearTransactionSplit,
   createImportReviewState,
   failSubmission,
   finishSubmission,
   getCurrentTransaction,
   getReviewCounts,
   ignoreTransaction,
+  removeTransactionSplit,
   reopenTransaction,
+  setSplitAmount,
+  setSplitCategory,
   setTransactionAmount,
   setTransactionCategory,
   setTransactionDisplayNameOverride,
   setTransactionNotes,
   skipTransaction,
+  startTransactionSplit,
   startSubmission,
   type ImportReviewState,
 } from "./reviewState";
@@ -222,6 +228,30 @@ export function ImportPage({
               }
               onNotesChange={(notes) =>
                 setReviewState((state) => (state ? setTransactionNotes(state, currentTransaction.id, notes) : state))
+              }
+              onStartSplit={() =>
+                setReviewState((state) => (state ? startTransactionSplit(state, currentTransaction.id) : state))
+              }
+              onAddSplit={() =>
+                setReviewState((state) => (state ? addTransactionSplit(state, currentTransaction.id) : state))
+              }
+              onRemoveSplit={(splitId) =>
+                setReviewState((state) =>
+                  state ? removeTransactionSplit(state, currentTransaction.id, splitId) : state,
+                )
+              }
+              onClearSplit={() =>
+                setReviewState((state) => (state ? clearTransactionSplit(state, currentTransaction.id) : state))
+              }
+              onSplitAmountChange={(splitId, amount) =>
+                setReviewState((state) =>
+                  state ? setSplitAmount(state, currentTransaction.id, splitId, amount) : state,
+                )
+              }
+              onSplitCategoryChange={(splitId, category) =>
+                setReviewState((state) =>
+                  state ? setSplitCategory(state, currentTransaction.id, splitId, category) : state,
+                )
               }
               onApprove={() =>
                 setReviewState((state) => (state ? approveTransaction(state, currentTransaction.id) : state))

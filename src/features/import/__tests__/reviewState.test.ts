@@ -10,11 +10,17 @@ import {
   getReviewCounts,
   ignoreTransaction,
   reopenTransaction,
+  addTransactionSplit,
+  clearTransactionSplit,
+  removeTransactionSplit,
+  setSplitAmount,
+  setSplitCategory,
   setTransactionAmount,
   setTransactionCategory,
   setTransactionDisplayNameOverride,
   setTransactionNotes,
   skipTransaction,
+  startTransactionSplit,
   startSubmission,
 } from "../reviewState";
 
@@ -209,6 +215,67 @@ describe("reviewState", () => {
     expect(failed.submission.error).toBe("Backend submission failed.");
     expect(failed.transactions).toHaveLength(1);
     expect(failed.transactions[0]?.status).toBe("approved");
+  });
+
+  it("writes one import row per category when a transaction is split", () => {
+    const initial = createImportReviewState({
+      sourceAccount: "chequing",
+      fileName: "rbc.csv",
+      config: {
+        expenseCategories: ["Food", "Home"],
+        incomeCategories: ["Salary"],
+      },
+      transactions: [createTransaction({ selectedCategory: "Food", editableAmount: 40, originalAmount: -40 })],
+    });
+
+    const started = startTransactionSplit(initial, "tx-1");
+    expect(approveTransaction(started, "tx-1").transactions[0]?.status).toBe("pending");
+
+    const withAmounts = setSplitAmount(
+      setSplitAmount(started, "tx-1", "split-1", 25),
+      "tx-1",
+      "split-2",
+      15,
+    );
+    const withCategories = setSplitCategory(withAmounts, "tx-1", "split-2", "Home");
+    const approved = approveTransaction(withCategories, "tx-1");
+    expect(approved.transactions[0]?.status).toBe("approved");
+
+    const payload = buildApprovedImportBatch(approved);
+    expect(payload.approvedTransactions).toEqual([
+      expect.objectContaining({
+        id: "tx-1:split-1",
+        selectedCategory: "Food",
+        editableAmount: 25,
+        originalAmount: -40,
+        importFingerprint: "chequing|2026-05-01|-14.25|COFFEE SHOP",
+      }),
+      expect.objectContaining({
+        id: "tx-1:split-2",
+        selectedCategory: "Home",
+        editableAmount: 15,
+        importFingerprint: "chequing|2026-05-01|-14.25|COFFEE SHOP",
+      }),
+    ]);
+  });
+
+  it("returns to a single category when the extra parts are removed", () => {
+    const initial = createImportReviewState({
+      sourceAccount: "chequing",
+      fileName: "rbc.csv",
+      config: {
+        expenseCategories: ["Food", "Home"],
+        incomeCategories: ["Salary"],
+      },
+      transactions: [createTransaction({ selectedCategory: "Food" })],
+    });
+
+    const split = addTransactionSplit(startTransactionSplit(initial, "tx-1"), "tx-1");
+    expect(split.transactions[0]?.splits).toHaveLength(3);
+
+    const cleared = clearTransactionSplit(removeTransactionSplit(split, "tx-1", "split-3"), "tx-1");
+    expect(cleared.transactions[0]?.splits).toBeUndefined();
+    expect(cleared.transactions[0]?.selectedCategory).toBe("Food");
   });
 
   it("reports counts and success state after submission", () => {

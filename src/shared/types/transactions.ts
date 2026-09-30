@@ -26,6 +26,12 @@ export type DuplicateMatch = {
   matchReason: string;
 };
 
+export type TransactionSplit = {
+  id: string;
+  amount: number;
+  category?: string;
+};
+
 export type NormalizedTransaction = {
   id: string;
   sourceAccount: SourceAccount;
@@ -39,6 +45,7 @@ export type NormalizedTransaction = {
   direction: TransactionDirection;
   suggestedCategory?: string;
   selectedCategory?: string;
+  splits?: TransactionSplit[];
   notes?: string;
   status: TransactionStatus;
   ignoreReason?: IgnoreReason;
