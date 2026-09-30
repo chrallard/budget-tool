@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { LoadingIndicator } from "../../components/LoadingIndicator";
 import type { ImportParserError } from "../../lib/import/types";
 import { parseBankCsv } from "./parser/bankParser";
@@ -102,58 +102,34 @@ export function ImportPage({
   );
   const [context, setContext] = useState<ImportReviewContext | null>(null);
   const [contextError, setContextError] = useState<string | null>(null);
-  const [isLoadingContext, setIsLoadingContext] = useState(true);
+  const [isLoadingContext, setIsLoadingContext] = useState(false);
   const [pageMessage, setPageMessage] = useState<string | null>(null);
   const [reviewState, setReviewState] = useState<ImportReviewState | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    setIsLoadingContext(true);
-    setContextError(null);
-
-    resolvedDataSource
-      .getImportReviewContext()
-      .then((nextContext) => {
-        if (!active) {
-          return;
-        }
-
-        setContext(nextContext);
-      })
-      .catch((error: unknown) => {
-        if (!active) {
-          return;
-        }
-
-        setContextError(toErrorMessage(error));
-      })
-      .finally(() => {
-        if (active) {
-          setIsLoadingContext(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [resolvedDataSource]);
 
   const counts = useMemo(() => (reviewState ? getReviewCounts(reviewState) : null), [reviewState]);
   const currentTransaction = useMemo(() => (reviewState ? getCurrentTransaction(reviewState) : null), [reviewState]);
 
   async function handleFileSelected(file: File) {
-    if (!context) {
-      return;
-    }
-
     setPageMessage(null);
+    setContextError(null);
+    setIsLoadingContext(true);
 
     try {
+      let nextContext: ImportReviewContext;
+      try {
+        nextContext = context ?? (await resolvedDataSource.getImportReviewContext());
+        setContext(nextContext);
+      } catch (error) {
+        setReviewState(null);
+        setContextError(toErrorMessage(error));
+        return;
+      }
+
       const text = await readFileText(file);
       const parsed = parseBankCsv(text, {
-        expenseCategories: context.expenseCategories,
-        incomeCategories: context.incomeCategories,
-        existingRecords: context.existingRecords,
+        expenseCategories: nextContext.expenseCategories,
+        incomeCategories: nextContext.incomeCategories,
+        existingRecords: nextContext.existingRecords,
       });
 
       setReviewState(
@@ -161,8 +137,8 @@ export function ImportPage({
           sourceAccount: parsed.sourceAccount,
           transactions: parsed.transactions,
           config: {
-            expenseCategories: context.expenseCategories,
-            incomeCategories: context.incomeCategories,
+            expenseCategories: nextContext.expenseCategories,
+            incomeCategories: nextContext.incomeCategories,
           },
           fileName: file.name,
         }),
@@ -170,6 +146,8 @@ export function ImportPage({
     } catch (error) {
       setReviewState(null);
       setPageMessage(toErrorMessage(error));
+    } finally {
+      setIsLoadingContext(false);
     }
   }
 
@@ -209,7 +187,7 @@ export function ImportPage({
       <CsvUpload disabled={isLoadingContext} onFileSelected={handleFileSelected} />
 
       {isLoadingContext ? (
-        <LoadingIndicator label="Loading categories and duplicate metadata" />
+        <LoadingIndicator label="Preparing import" />
       ) : null}
       {contextError ? (
         <section className="dashboard-error" role="alert">

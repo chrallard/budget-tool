@@ -52,6 +52,20 @@ afterEach(() => {
 });
 
 describe("ImportPage", () => {
+  it("does not load categories until a file is chosen", () => {
+    const getImportReviewContext = vi.fn(async () => ({
+      expenseCategories: ["Food"],
+      incomeCategories: ["Salary"],
+      existingRecords: [],
+    }));
+
+    render(<ImportPage dataSource={createDataSource({ getImportReviewContext })} />);
+
+    expect(screen.getByLabelText(/choose an rbc or td export/i)).toBeEnabled();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(getImportReviewContext).not.toHaveBeenCalled();
+  });
+
   it("uploads a valid chequing CSV and shows one pending transaction at a time", async () => {
     const user = userEvent.setup();
     render(<ImportPage dataSource={createDataSource()} />);
