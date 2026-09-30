@@ -258,6 +258,10 @@ describe("DashboardPage", () => {
 
     expect(await screen.findByText("Over budget")).toBeInTheDocument();
     expect(screen.getByText("No budget target set for this category.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Expected Spending" }).closest("article")).toHaveTextContent(
+      "$1,200.00",
+    );
+    expect(screen.getByRole("heading", { name: "Left in Plan" }).closest("article")).toHaveTextContent("-$250.00");
   });
 
   it("applies mobile-safe overflow protection", async () => {

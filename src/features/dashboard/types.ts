@@ -40,6 +40,8 @@ export type CategoryCardData = {
 
 export type DashboardSummary = {
   month: string;
+  expectedSpending: number;
+  spendingLeft: number;
   totalSpending: number;
   totalIncome: number;
   profit: number;

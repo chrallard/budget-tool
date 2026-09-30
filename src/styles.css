@@ -360,6 +360,10 @@ h1 {
   font-weight: 700;
 }
 
+.summary-card__negative {
+  color: var(--warn);
+}
+
 .category-card {
   border: 1px solid var(--border);
   border-radius: 1rem;

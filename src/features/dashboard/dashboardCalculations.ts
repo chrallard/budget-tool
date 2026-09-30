@@ -88,12 +88,16 @@ export function calculateDashboardSummary(
   income: IncomeRow[],
   cards: CategoryCardData[],
 ): DashboardSummary {
+  const expectedSpending = cards.reduce((sum, card) => sum + (card.budgetTarget ?? 0), 0);
   const totalSpending = filterExpensesByMonth(expenses, month).reduce((sum, row) => sum + row.amount, 0);
   const totalIncome = filterIncomeByMonth(income, month).reduce((sum, row) => sum + row.amount, 0);
+  const spendingLeft = expectedSpending - totalSpending;
   const profit = totalIncome - totalSpending;
 
   return {
     month,
+    expectedSpending,
+    spendingLeft,
     totalSpending,
     totalIncome,
     profit,

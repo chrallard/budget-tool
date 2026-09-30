@@ -66,6 +66,8 @@ describe("dashboard calculations", () => {
     const cards = calculateCategoryCards(expenseCategories, budgetTargets, expenses, "2026-05");
     const summary = calculateDashboardSummary("2026-05", expenses, income, cards);
 
+    expect(summary.expectedSpending).toBe(2300);
+    expect(summary.spendingLeft).toBe(370);
     expect(summary.totalSpending).toBe(1930);
     expect(summary.totalIncome).toBe(3200);
     expect(summary.profit).toBe(1270);
