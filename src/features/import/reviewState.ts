@@ -1,7 +1,9 @@
 import type {
+  ApiAllotment,
   ImportBatchTransaction,
   PostImportBatchRequest,
 } from "../../api/client";
+import { allotmentsForExpense } from "./matchingAllotments";
 import type {
   DuplicateStatus,
   IgnoreReason,
@@ -26,6 +28,7 @@ export type ImportReviewState = {
   transactions: NormalizedTransaction[];
   config: ReviewConfig;
   fileName: string;
+  allotments: ApiAllotment[];
   submission: ReviewSubmissionState;
 };
 
@@ -144,6 +147,7 @@ export function createImportReviewState(params: {
   config: ReviewConfig;
   fileName: string;
   rememberedFingerprints?: string[];
+  allotments?: ApiAllotment[];
 }): ImportReviewState {
   const remembered = new Set(params.rememberedFingerprints ?? []);
 
@@ -162,6 +166,7 @@ export function createImportReviewState(params: {
     }),
     config: params.config,
     fileName: params.fileName,
+    allotments: params.allotments ?? [],
     submission: {
       isSubmitting: false,
       error: null,
@@ -224,6 +229,19 @@ export function setTransactionCategory(
   return updateTransaction(state, transactionId, (transaction) => ({
     ...transaction,
     selectedCategory,
+    allotmentId: undefined,
+    status: transaction.status === "approved" ? "pending" : transaction.status,
+  }));
+}
+
+export function setTransactionAllotment(
+  state: ImportReviewState,
+  transactionId: string,
+  allotmentId: string,
+): ImportReviewState {
+  return updateTransaction(state, transactionId, (transaction) => ({
+    ...transaction,
+    allotmentId: allotmentId.trim() || undefined,
     status: transaction.status === "approved" ? "pending" : transaction.status,
   }));
 }
@@ -281,6 +299,7 @@ export function startTransactionSplit(
           id: "split-1",
           amount: transaction.editableAmount,
           category: transaction.selectedCategory,
+          allotmentId: transaction.allotmentId,
         },
         {
           id: "split-2",
@@ -335,11 +354,13 @@ export function removeTransactionSplit(
       };
     }
 
+    const kept = remaining[0];
     return {
       ...transaction,
       status: transaction.status === "approved" ? "pending" : transaction.status,
       splits: undefined,
-      selectedCategory: remaining[0]?.category ?? transaction.selectedCategory,
+      selectedCategory: kept?.category ?? transaction.selectedCategory,
+      allotmentId: kept?.allotmentId,
     };
   });
 }
@@ -353,6 +374,7 @@ export function clearTransactionSplit(
     status: transaction.status === "approved" ? "pending" : transaction.status,
     splits: undefined,
     selectedCategory: transaction.splits?.[0]?.category ?? transaction.selectedCategory,
+    allotmentId: transaction.splits?.[0]?.allotmentId,
   }));
 }
 
@@ -376,6 +398,28 @@ export function setSplitAmount(
   });
 }
 
+export function setSplitAllotment(
+  state: ImportReviewState,
+  transactionId: string,
+  splitId: string,
+  allotmentId: string,
+): ImportReviewState {
+  return updateTransaction(state, transactionId, (transaction) => {
+    const splits = getActiveSplits(transaction);
+    if (!splits) {
+      return transaction;
+    }
+
+    return {
+      ...transaction,
+      status: transaction.status === "approved" ? "pending" : transaction.status,
+      splits: splits.map((split) =>
+        split.id === splitId ? { ...split, allotmentId: allotmentId.trim() || undefined } : split,
+      ),
+    };
+  });
+}
+
 export function setSplitCategory(
   state: ImportReviewState,
   transactionId: string,
@@ -391,7 +435,9 @@ export function setSplitCategory(
     return {
       ...transaction,
       status: transaction.status === "approved" ? "pending" : transaction.status,
-      splits: splits.map((split) => (split.id === splitId ? { ...split, category } : split)),
+      splits: splits.map((split) =>
+        split.id === splitId ? { ...split, category, allotmentId: undefined } : split,
+      ),
     };
   });
 }
@@ -499,17 +545,27 @@ export function hasOutstandingDuplicates(
 
 function toImportBatchTransaction(
   transaction: NormalizedTransaction,
+  allotments: ApiAllotment[],
   overrides?: {
     id: string;
     selectedCategory: string;
     editableAmount: number;
+    allotmentId?: string;
   },
 ): ImportBatchTransaction {
+  const selectedCategory = overrides?.selectedCategory ?? transaction.selectedCategory ?? "";
+  const allotmentId = linkedAllotmentId(
+    allotments,
+    transaction,
+    selectedCategory,
+    overrides ? overrides.allotmentId : transaction.allotmentId,
+  );
+
   return {
     id: overrides?.id ?? transaction.id,
     direction: transaction.direction,
     displayDate: transaction.displayDate,
-    selectedCategory: overrides?.selectedCategory ?? transaction.selectedCategory ?? "",
+    selectedCategory,
     editableAmount: overrides?.editableAmount ?? transaction.editableAmount,
     displayNameOverride: transaction.displayNameOverride?.trim()
       ? transaction.displayNameOverride.trim()
@@ -521,7 +577,23 @@ function toImportBatchTransaction(
     originalDescription: transaction.originalDescription,
     normalizedDescription: transaction.normalizedDescription,
     importFingerprint: transaction.importFingerprint,
+    ...(allotmentId ? { allotmentId } : {}),
   };
+}
+
+function linkedAllotmentId(
+  allotments: ApiAllotment[],
+  transaction: NormalizedTransaction,
+  category: string,
+  allotmentId: string | undefined,
+): string | undefined {
+  const trimmed = allotmentId?.trim();
+  if (!trimmed || transaction.direction !== "expense") {
+    return undefined;
+  }
+
+  const matches = allotmentsForExpense(allotments, category, transaction.displayDate);
+  return matches.some((allotment) => allotment.id === trimmed) ? trimmed : undefined;
 }
 
 export function buildApprovedImportBatch(
@@ -533,14 +605,15 @@ export function buildApprovedImportBatch(
     .flatMap((transaction) => {
       const splits = getActiveSplits(transaction);
       if (!splits) {
-        return [toImportBatchTransaction(transaction)];
+        return [toImportBatchTransaction(transaction, state.allotments)];
       }
 
       return splits.map((split) =>
-        toImportBatchTransaction(transaction, {
+        toImportBatchTransaction(transaction, state.allotments, {
           id: `${transaction.id}:${split.id}`,
           selectedCategory: split.category ?? "",
           editableAmount: split.amount,
+          allotmentId: split.allotmentId,
         }),
       );
     });

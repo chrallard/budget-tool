@@ -2,12 +2,13 @@
 
 ## Overview
 
-The API contract exposes four capabilities:
+The API contract exposes these capabilities:
 
 - `GET /config`
 - `GET /dashboard?month=YYYY-MM`
 - `GET /import-fingerprints`
 - `POST /import-batch`
+- `GET /allotments?profitMonth=YYYY-MM`, `POST /save-allotment`, and `POST /delete-allotment` (see [allotments.md](allotments.md))
 
 Because Google Apps Script commonly routes through `doGet` and `doPost`, the implementation may use either:
 
@@ -189,6 +190,7 @@ export type ImportBatchTransaction = {
   originalDescription: string;
   normalizedDescription: string;
   importFingerprint: string;
+  allotmentId?: string; // expense only; links the new row to an existing allotment
 };
 
 export type PostImportBatchRequest = {
@@ -220,6 +222,7 @@ Response: `ApiResponse<PostImportBatchResponse>`
 - Enforce `editableAmount` numeric and finite.
 - Enforce `importFingerprint` presence.
 - If `displayNameOverride` is provided, it must be a non-empty string after trimming.
+- If `allotmentId` is provided, it must be a non-empty string, the row must be an expense, and the allotment must use that category with the expense month as its spending month.
 - Enforce `Entry Method = Importer` for all writes.
 - Populate metadata columns on write:
   - `Source Account`

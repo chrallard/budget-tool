@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { AccessGate } from "./auth/AccessGate";
 import { requiresAccessKey } from "./auth/accessKey";
+import { AllotmentsPage } from "./features/dashboard/AllotmentsPage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { CategoryTransactionsPage } from "./features/dashboard/CategoryTransactionsPage";
 import { ImportPage } from "./features/import/ImportPage";
@@ -9,7 +10,7 @@ import type { DashboardData } from "./features/dashboard/types";
 export function App() {
   const accessRequired = requiresAccessKey();
   const [unlocked, setUnlocked] = useState(() => !accessRequired);
-  const [activeView, setActiveView] = useState<"dashboard" | "import" | "category-transactions">(
+  const [activeView, setActiveView] = useState<"dashboard" | "allotments" | "import" | "category-transactions">(
     "dashboard",
   );
   const [dashboardRefreshToken, setDashboardRefreshToken] = useState(0);
@@ -58,6 +59,15 @@ export function App() {
           <button
             type="button"
             role="tab"
+            aria-selected={activeView === "allotments"}
+            className={activeView === "allotments" ? "nav-button nav-button--active" : "nav-button"}
+            onClick={() => setActiveView("allotments")}
+          >
+            Allotments
+          </button>
+          <button
+            type="button"
+            role="tab"
             aria-selected={activeView === "import"}
             className={activeView === "import" ? "nav-button nav-button--active" : "nav-button"}
             onClick={() => setActiveView("import")}
@@ -74,6 +84,7 @@ export function App() {
           onDataLoaded={handleDashboardDataLoaded}
         />
       </div>
+      {activeView === "allotments" ? <AllotmentsPage /> : null}
       {activeView === "import" ? (
         <ImportPage
           onImportSuccess={() => {

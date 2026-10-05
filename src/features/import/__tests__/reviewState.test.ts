@@ -13,8 +13,10 @@ import {
   addTransactionSplit,
   clearTransactionSplit,
   removeTransactionSplit,
+  setSplitAllotment,
   setSplitAmount,
   setSplitCategory,
+  setTransactionAllotment,
   setTransactionAmount,
   setTransactionCategory,
   setTransactionDisplayNameOverride,
@@ -44,8 +46,28 @@ function createTransaction(overrides: Partial<NormalizedTransaction> = {}): Norm
     duplicateStatus: overrides.duplicateStatus ?? "not_duplicate",
     duplicateMatches: overrides.duplicateMatches,
     importFingerprint: overrides.importFingerprint ?? "chequing|2026-05-01|-14.25|COFFEE SHOP",
+    allotmentId: overrides.allotmentId,
+    splits: overrides.splits,
   };
 }
+
+const groceries = {
+  id: "allotment-food",
+  profitMonth: "2026-04",
+  name: "Groceries",
+  amount: 200,
+  category: "Food",
+  expenseIds: [],
+};
+
+const lamp = {
+  id: "allotment-home",
+  profitMonth: "2026-04",
+  name: "Lamp",
+  amount: 80,
+  category: "Home",
+  expenseIds: [],
+};
 
 describe("reviewState", () => {
   it("preselects only valid suggested categories", () => {
@@ -354,5 +376,65 @@ describe("reviewState", () => {
 
     expect(payload.approvedTransactions).toHaveLength(1);
     expect(payload.skippedFingerprints).toEqual([]);
+  });
+
+  it("includes an allotment id when the expense matches that plan", () => {
+    const initial = createImportReviewState({
+      sourceAccount: "chequing",
+      fileName: "rbc.csv",
+      config: {
+        expenseCategories: ["Food", "Home"],
+        incomeCategories: ["Salary"],
+      },
+      allotments: [groceries, lamp],
+      transactions: [createTransaction({ selectedCategory: "Food" })],
+    });
+
+    const linked = setTransactionAllotment(initial, "tx-1", "allotment-food");
+    const payload = buildApprovedImportBatch(approveTransaction(linked, "tx-1"));
+    expect(payload.approvedTransactions[0]?.allotmentId).toBe("allotment-food");
+
+    const changed = setTransactionCategory(linked, "tx-1", "Home");
+    expect(changed.transactions[0]?.allotmentId).toBeUndefined();
+    const dropped = buildApprovedImportBatch(approveTransaction(changed, "tx-1"));
+    expect(dropped.approvedTransactions[0]?.allotmentId).toBeUndefined();
+  });
+
+  it("omits an allotment that does not fund that category and month", () => {
+    const initial = createImportReviewState({
+      sourceAccount: "chequing",
+      fileName: "rbc.csv",
+      config: {
+        expenseCategories: ["Food"],
+        incomeCategories: ["Salary"],
+      },
+      allotments: [lamp],
+      transactions: [createTransaction({ selectedCategory: "Food", allotmentId: "allotment-home", status: "approved" })],
+    });
+
+    expect(buildApprovedImportBatch(initial).approvedTransactions[0]?.allotmentId).toBeUndefined();
+  });
+
+  it("links each split to its own allotment", () => {
+    const initial = createImportReviewState({
+      sourceAccount: "chequing",
+      fileName: "rbc.csv",
+      config: {
+        expenseCategories: ["Food", "Home"],
+        incomeCategories: ["Salary"],
+      },
+      allotments: [groceries, lamp],
+      transactions: [createTransaction({ selectedCategory: "Food", editableAmount: 40, originalAmount: -40 })],
+    });
+
+    const started = startTransactionSplit(setTransactionAllotment(initial, "tx-1", "allotment-food"), "tx-1");
+    const withAmounts = setSplitAmount(setSplitAmount(started, "tx-1", "split-1", 25), "tx-1", "split-2", 15);
+    const withCategories = setSplitCategory(withAmounts, "tx-1", "split-2", "Home");
+    const linked = setSplitAllotment(withCategories, "tx-1", "split-2", "allotment-home");
+    const payload = buildApprovedImportBatch(approveTransaction(linked, "tx-1"));
+
+    expect(payload.approvedTransactions[0]?.allotmentId).toBe("allotment-food");
+    expect(payload.approvedTransactions[1]?.allotmentId).toBe("allotment-home");
+    expect(setSplitCategory(linked, "tx-1", "split-1", "Home").transactions[0]?.splits?.[0]?.allotmentId).toBeUndefined();
   });
 });

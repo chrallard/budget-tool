@@ -74,7 +74,9 @@ function readDashboardRows_(sheetName, requiredHeaders, kind, month) {
     var entryMethod = String(row[headerMap["Entry Method"] - 1] || "").trim();
 
     if (kind === "expense") {
+      var rowId = headerMap["Row Id"] ? String(row[headerMap["Row Id"] - 1] || "").trim() : "";
       results.push({
+        id: rowId || undefined,
         date: dateText,
         vendor: String(row[headerMap["Store / Vendor"] - 1] || "").trim(),
         amount: amount,

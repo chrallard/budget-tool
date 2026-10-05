@@ -258,6 +258,52 @@ function ensureSheetSchemaAndEntryMethodRules_() {
 
   backfillBlankEntryMethodToManual_(expenses, APP_CONFIG.HEADERS.EXPENSES_VISIBLE);
   backfillBlankEntryMethodToManual_(income, APP_CONFIG.HEADERS.INCOME_VISIBLE);
+  ensureExpenseRowIds_(expenses);
+}
+
+function ensureExpenseRowIds_(sheet) {
+  var headerMap = getOrCreateHeaderMap_(sheet, APP_CONFIG.HEADERS.EXPENSES_VISIBLE);
+  var header = "Row Id";
+  var headerRow = Number(headerMap.__headerRow || 1);
+
+  if (!headerMap[header]) {
+    var appendCol = sheet.getLastColumn() + 1;
+    sheet.getRange(headerRow, appendCol).setValue(header);
+    headerMap[header] = appendCol;
+  }
+
+  var idCol = headerMap[header];
+  sheet.hideColumns(idCol);
+  sheet.getRange(headerRow, idCol, sheet.getMaxRows() - headerRow + 1, 1).setNumberFormat("@");
+
+  var lastRow = sheet.getLastRow();
+  var dataStartRow = headerRow + 1;
+  if (lastRow < dataStartRow) {
+    return headerMap;
+  }
+
+  var rowCount = lastRow - dataStartRow + 1;
+  var idValues = sheet.getRange(dataStartRow, idCol, rowCount, 1).getValues();
+  var dateCol = headerMap.Date;
+  var dateValues = dateCol ? sheet.getRange(dataStartRow, dateCol, rowCount, 1).getValues() : [];
+  var updated = false;
+
+  for (var i = 0; i < idValues.length; i += 1) {
+    if (!dateValues[i] || String(dateValues[i][0] || "").trim() === "") {
+      continue;
+    }
+
+    if (!String(idValues[i][0] || "").trim()) {
+      idValues[i][0] = Utilities.getUuid();
+      updated = true;
+    }
+  }
+
+  if (updated) {
+    sheet.getRange(dataStartRow, idCol, rowCount, 1).setValues(idValues);
+  }
+
+  return headerMap;
 }
 
 function readCategorySetup_() {

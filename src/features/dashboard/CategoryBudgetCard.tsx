@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { BudgetProgress } from "./BudgetProgress";
 import { formatCurrency } from "./format";
 import type { CategoryCardData } from "./types";
@@ -5,9 +6,10 @@ import type { CategoryCardData } from "./types";
 type CategoryBudgetCardProps = {
   card: CategoryCardData;
   onClick?: () => void;
+  children?: ReactNode;
 };
 
-export function CategoryBudgetCard({ card, onClick }: Readonly<CategoryBudgetCardProps>) {
+export function CategoryBudgetCard({ card, onClick, children }: Readonly<CategoryBudgetCardProps>) {
   const budgetLabel = card.budgetTarget === undefined ? "No target" : formatCurrency(card.budgetTarget);
   const remainingLabel = card.remaining === undefined ? "No target" : formatCurrency(card.remaining);
   const content = (
@@ -43,5 +45,10 @@ export function CategoryBudgetCard({ card, onClick }: Readonly<CategoryBudgetCar
     );
   }
 
-  return <article className={className}>{content}</article>;
+  return (
+    <article className={className}>
+      {content}
+      {children}
+    </article>
+  );
 }

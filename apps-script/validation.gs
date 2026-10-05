@@ -126,6 +126,25 @@ function validateSingleImportTransaction_(tx, expenseSet, incomeSet) {
     }
   }
 
+  if (tx.allotmentId !== undefined && tx.allotmentId !== null && String(tx.allotmentId).trim() !== "") {
+    if (typeof tx.allotmentId !== "string") {
+      errors.push("allotmentId must be a string when provided");
+    } else if (tx.direction !== "expense") {
+      errors.push("allotmentId is only valid for an expense");
+    } else if (String(tx.allotmentId).trim().length > 80) {
+      errors.push("allotmentId is too long");
+    } else {
+      var linkError = allotmentLinkError_(
+        String(tx.allotmentId).trim(),
+        String(tx.selectedCategory || "").trim(),
+        monthFromMmDdYyyy_(normalizedDate)
+      );
+      if (linkError) {
+        errors.push(linkError);
+      }
+    }
+  }
+
   return errors;
 }
 

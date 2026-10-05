@@ -3,14 +3,18 @@ var APP_CONFIG = {
     CONFIG: "config",
     DASHBOARD: "dashboard",
     IMPORT_FINGERPRINTS: "importFingerprints",
-    IMPORT_BATCH: "importBatch"
+    IMPORT_BATCH: "importBatch",
+    ALLOTMENTS: "allotments",
+    SAVE_ALLOTMENT: "saveAllotment",
+    DELETE_ALLOTMENT: "deleteAllotment"
   },
   SHEETS: {
     CATEGORY_SETUP: "Category Setup",
     EXPENSES: "Expenses",
     INCOME: "Income",
     BUDGET_TARGETS: "Budget Targets",
-    SKIPPED: "Skipped"
+    SKIPPED: "Skipped",
+    ALLOTMENTS: "Allotments"
   },
   SHEET_HEADER_ROWS: {
     Expenses: 7,

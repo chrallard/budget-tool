@@ -5,6 +5,7 @@ export type BudgetTarget = {
 };
 
 export type ExpenseRow = {
+  id?: string;
   date: string;
   amount: number;
   category: string;
@@ -40,9 +41,25 @@ export type CategoryCardData = {
 
 export type DashboardSummary = {
   month: string;
-  expectedSpending: number;
-  spendingLeft: number;
   totalSpending: number;
   totalIncome: number;
   profit: number;
+};
+
+export type Allotment = {
+  id: string;
+  profitMonth: string;
+  name: string;
+  amount: number;
+  category: string;
+  expenseIds: string[];
+};
+
+export type AllotmentDraft = {
+  id?: string;
+  profitMonth: string;
+  name: string;
+  amount: number;
+  category: string;
+  expenseIds?: string[];
 };

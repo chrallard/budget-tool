@@ -30,6 +30,7 @@ export type TransactionSplit = {
   id: string;
   amount: number;
   category?: string;
+  allotmentId?: string;
 };
 
 export type NormalizedTransaction = {
@@ -45,6 +46,7 @@ export type NormalizedTransaction = {
   direction: TransactionDirection;
   suggestedCategory?: string;
   selectedCategory?: string;
+  allotmentId?: string;
   splits?: TransactionSplit[];
   notes?: string;
   status: TransactionStatus;

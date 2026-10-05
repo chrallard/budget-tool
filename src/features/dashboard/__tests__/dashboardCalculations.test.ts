@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  calculateAllotmentCategoryCards,
+  calculateAllotmentSummary,
   calculateCategoryCards,
   calculateDashboardSummary,
   calculateMonthProfit,
   filterExpensesByMonth,
+  fundedExpenseTotal,
+  meaningfulProfit,
   previousMonth,
+  stillFree,
 } from "../dashboardCalculations";
-import type { BudgetTarget, ExpenseRow, IncomeRow } from "../types";
+import type { Allotment, BudgetTarget, ExpenseRow, IncomeRow } from "../types";
 
 describe("dashboard calculations", () => {
   const expenseCategories = ["Food", "Rent", "Pets"];
@@ -65,20 +70,52 @@ describe("dashboard calculations", () => {
   });
 
   it("builds summary totals for selected month only", () => {
-    const cards = calculateCategoryCards(expenseCategories, budgetTargets, expenses, "2026-05");
-    const summary = calculateDashboardSummary("2026-05", expenses, income, cards);
+    const summary = calculateDashboardSummary("2026-05", expenses, income);
 
-    expect(summary.expectedSpending).toBe(2300);
-    expect(summary.spendingLeft).toBe(370);
     expect(summary.totalSpending).toBe(1930);
     expect(summary.totalIncome).toBe(3200);
     expect(summary.profit).toBe(1270);
   });
 
-  it("uses the previous month's profit as money to work with", () => {
+  it("uses linked expenses, not the unlinked plan, for meaningful profit", () => {
     expect(previousMonth("2026-09")).toBe("2026-08");
     expect(previousMonth("2026-01")).toBe("2025-12");
-    expect(calculateMonthProfit("2026-04", expenses, income)).toBe(3200 - 999);
+    const monthExpenses: ExpenseRow[] = [
+      { id: "bed-txn", date: "05-02-2026", category: "Rent", amount: 1000 },
+      { id: "food-txn", date: "05-03-2026", category: "Food", amount: 80 },
+      { id: "other-month", date: "04-02-2026", category: "Rent", amount: 500 },
+    ];
+    const allotments: Allotment[] = [
+      {
+        id: "bed",
+        profitMonth: "2026-04",
+        name: "Bed frame",
+        amount: 400,
+        category: "Rent",
+        expenseIds: ["bed-txn", "missing", "other-month"],
+      },
+      {
+        id: "lamp",
+        profitMonth: "2026-04",
+        name: "Lamp",
+        amount: 200,
+        category: "Food",
+        expenseIds: [],
+      },
+    ];
+
+    expect(fundedExpenseTotal(allotments, monthExpenses, "2026-05")).toBe(1000);
+    expect(meaningfulProfit(1270, fundedExpenseTotal(allotments, monthExpenses, "2026-05"))).toBe(2270);
+    expect(stillFree(1000, allotments)).toBe(400);
+
+    const summary = calculateAllotmentSummary("2026-05", monthExpenses, income, allotments);
+    expect(summary.totalIncome).toBe(3200);
+    expect(summary.totalSpending).toBe(80);
+    expect(summary.profit).toBe(3120);
+
+    const cards = calculateAllotmentCategoryCards(expenseCategories, budgetTargets, monthExpenses, "2026-05", allotments);
+    expect(cards.find((card) => card.category === "Rent")?.used).toBe(0);
+    expect(cards.find((card) => card.category === "Food")?.used).toBe(80);
   });
 
   it("orders category cards by used spending in descending order", () => {

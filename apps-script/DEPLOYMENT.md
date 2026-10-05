@@ -22,6 +22,7 @@ Set the property in the Apps Script editor under Project Settings → Script pro
    - `dashboard.gs`
    - `validation.gs`
    - `import.gs`
+   - `allotments.gs`
 3. Save all files.
 4. Deploy -> New deployment -> Web app.
 5. Set:
@@ -41,9 +42,11 @@ Set the property in the Apps Script editor under Project Settings → Script pro
 2. `GET action=config&key=<APP_ACCESS_KEY>` returns categories and targets from the sheet.
 3. `GET action=dashboard&month=2026-05` returns only selected-month rows.
 4. `GET action=importFingerprints` returns rows with `Import Fingerprint`.
-5. `POST action=importBatch` with approved transactions writes rows and metadata.
+5. `POST action=importBatch` with approved transactions writes rows and metadata. An expense `allotmentId` appends the new row id to that allotment.
 6. Metadata columns are present and hidden in `Expenses` and `Income`.
 7. Existing rows with blank `Entry Method` are backfilled to `Manual`.
 8. New imported rows set `Entry Method = Importer`.
 9. Invalid payload returns `ok: false` with `VALIDATION_ERROR`.
 10. Full write failure returns `ok: false` with `SHEET_WRITE_ERROR`.
+11. Expense rows have a hidden `Row Id`. Blank ids are backfilled. New imports write one.
+12. `GET action=allotments&profitMonth=YYYY-MM` returns plans with `category` and `expenseIds`. `Spent` is ignored.

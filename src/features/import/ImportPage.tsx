@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { LoadingIndicator } from "../../components/LoadingIndicator";
+import type { ApiAllotment } from "../../api/client";
 import type { ImportParserError } from "../../lib/import/types";
 import { parseBankCsv } from "./parser/bankParser";
 import { CsvUpload } from "./CsvUpload";
@@ -10,6 +11,7 @@ import {
 } from "./importDataSource";
 import { ImportProgress } from "./ImportProgress";
 import { SubmitImportBatchButton } from "./SubmitImportBatchButton";
+import { profitMonthsForExpenses } from "./matchingAllotments";
 import { TransactionReviewCard } from "./TransactionReviewCard";
 import {
   addTransactionSplit,
@@ -24,8 +26,10 @@ import {
   ignoreTransaction,
   removeTransactionSplit,
   reopenTransaction,
+  setSplitAllotment,
   setSplitAmount,
   setSplitCategory,
+  setTransactionAllotment,
   setTransactionAmount,
   setTransactionCategory,
   setTransactionDisplayNameOverride,
@@ -138,6 +142,22 @@ export function ImportPage({
       });
       const rememberedFingerprints = nextContext.skippedFingerprints ?? [];
       const remembered = new Set(rememberedFingerprints);
+      let allotments: ApiAllotment[] = [];
+      try {
+        const profitMonths = profitMonthsForExpenses(
+          parsed.transactions
+            .filter((transaction) => transaction.direction === "expense")
+            .map((transaction) => transaction.displayDate),
+        );
+        const groups = await Promise.all(
+          profitMonths.map((profitMonth) => resolvedDataSource.getAllotments(profitMonth)),
+        );
+        allotments = groups.flat();
+      } catch (error) {
+        setPageMessage(
+          `Allotments could not be loaded. You can still import without linking them. ${toErrorMessage(error)}`,
+        );
+      }
 
       setPreviouslySkippedCount(
         parsed.transactions.filter((transaction) => remembered.has(transaction.importFingerprint)).length,
@@ -152,6 +172,7 @@ export function ImportPage({
           },
           fileName: file.name,
           rememberedFingerprints,
+          allotments,
         }),
       );
     } catch (error) {
@@ -220,8 +241,14 @@ export function ImportPage({
             <TransactionReviewCard
               transaction={currentTransaction}
               config={reviewState.config}
+              allotments={reviewState.allotments}
               onCategoryChange={(category) =>
                 setReviewState((state) => (state ? setTransactionCategory(state, currentTransaction.id, category) : state))
+              }
+              onAllotmentChange={(allotmentId) =>
+                setReviewState((state) =>
+                  state ? setTransactionAllotment(state, currentTransaction.id, allotmentId) : state,
+                )
               }
               onAmountChange={(amount) =>
                 setReviewState((state) => (state ? setTransactionAmount(state, currentTransaction.id, amount) : state))
@@ -256,6 +283,11 @@ export function ImportPage({
               onSplitCategoryChange={(splitId, category) =>
                 setReviewState((state) =>
                   state ? setSplitCategory(state, currentTransaction.id, splitId, category) : state,
+                )
+              }
+              onSplitAllotmentChange={(splitId, allotmentId) =>
+                setReviewState((state) =>
+                  state ? setSplitAllotment(state, currentTransaction.id, splitId, allotmentId) : state,
                 )
               }
               onApprove={() =>

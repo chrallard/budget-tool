@@ -64,6 +64,7 @@ export type ImportBatchTransaction = {
   originalDescription: string;
   normalizedDescription: string;
   importFingerprint: string;
+  allotmentId?: string;
 };
 
 export type PostImportBatchRequest = {
@@ -87,6 +88,7 @@ export type PostImportBatchResponse = {
 };
 
 export type DashboardExpenseRow = {
+  id?: string;
   date: string;
   vendor?: string;
   source?: string;
@@ -102,6 +104,28 @@ export type DashboardIncomeRow = {
   amount: number;
   category: string;
   notes?: string;
+};
+
+export type ApiAllotment = {
+  id: string;
+  profitMonth: string;
+  name: string;
+  amount: number;
+  category: string;
+  expenseIds: string[];
+};
+
+export type SaveAllotmentRequest = {
+  id?: string;
+  profitMonth: string;
+  name: string;
+  amount: number;
+  category: string;
+  expenseIds?: string[];
+};
+
+export type GetAllotmentsResponse = {
+  allotments: ApiAllotment[];
 };
 
 export type GetDashboardResponse = {
@@ -161,6 +185,25 @@ export class AppsScriptApiClient {
 
   async getDashboard(month: string): Promise<GetDashboardResponse> {
     return this.get<GetDashboardResponse>(apiActions.dashboard, { month });
+  }
+
+  async getAllotments(profitMonth: string): Promise<GetAllotmentsResponse> {
+    return this.get<GetAllotmentsResponse>(apiActions.allotments, { profitMonth });
+  }
+
+  async saveAllotment(draft: SaveAllotmentRequest): Promise<ApiAllotment> {
+    const data = await this.post<{ allotment: ApiAllotment }>({
+      action: apiActions.saveAllotment,
+      ...draft,
+    });
+    return data.allotment;
+  }
+
+  async deleteAllotment(id: string): Promise<void> {
+    await this.post<{ id: string }>({
+      action: apiActions.deleteAllotment,
+      id,
+    });
   }
 
   async getImportFingerprints(): Promise<GetImportFingerprintsResponse> {

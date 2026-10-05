@@ -7,10 +7,13 @@ import {
 } from "../../api/client";
 import { collectAvailableMonths } from "./dashboardCalculations";
 import { mockDashboardData } from "./mockDashboardData";
-import type { BudgetTarget, DashboardData } from "./types";
+import type { Allotment, AllotmentDraft, BudgetTarget, DashboardData } from "./types";
 
 export interface DashboardDataSource {
   getDashboardData(month: string): Promise<DashboardData>;
+  getAllotments(profitMonth: string): Promise<Allotment[]>;
+  saveAllotment(draft: AllotmentDraft): Promise<Allotment>;
+  deleteAllotment(id: string): Promise<void>;
 }
 
 function toBudgetTargets(targets: ApiBudgetTarget[]): BudgetTarget[] {
@@ -106,6 +109,22 @@ export class AppsScriptDashboardDataSource implements DashboardDataSource {
     return normalizeDashboardData(config, dashboard);
   }
 
+  async getAllotments(profitMonth: string): Promise<Allotment[]> {
+    const response = await this.client.getAllotments(profitMonth);
+    return (response.allotments ?? []).map((allotment) => ({
+      ...allotment,
+      expenseIds: allotment.expenseIds ?? [],
+    }));
+  }
+
+  async saveAllotment(draft: AllotmentDraft): Promise<Allotment> {
+    return this.client.saveAllotment(draft);
+  }
+
+  async deleteAllotment(id: string): Promise<void> {
+    await this.client.deleteAllotment(id);
+  }
+
   async getDashboardData(month: string): Promise<DashboardData> {
     const cached = this.cachedDashboardByMonth.get(month);
     if (cached) {
@@ -132,11 +151,39 @@ export class AppsScriptDashboardDataSource implements DashboardDataSource {
 }
 
 export class MockDashboardDataSource implements DashboardDataSource {
+  private allotments: Allotment[] = [];
+
   async getDashboardData(month: string): Promise<DashboardData> {
     return {
       ...mockDashboardData,
       month,
     };
+  }
+
+  async getAllotments(profitMonth: string): Promise<Allotment[]> {
+    return this.allotments.filter((allotment) => allotment.profitMonth === profitMonth);
+  }
+
+  async saveAllotment(draft: AllotmentDraft): Promise<Allotment> {
+    const saved: Allotment = {
+      id: draft.id ?? crypto.randomUUID(),
+      profitMonth: draft.profitMonth,
+      name: draft.name.trim(),
+      amount: Math.round(draft.amount * 100) / 100,
+      category: draft.category,
+      expenseIds: draft.expenseIds ?? [],
+    };
+    const index = this.allotments.findIndex((allotment) => allotment.id === saved.id);
+    if (index >= 0) {
+      this.allotments[index] = saved;
+    } else {
+      this.allotments.push(saved);
+    }
+    return saved;
+  }
+
+  async deleteAllotment(id: string): Promise<void> {
+    this.allotments = this.allotments.filter((allotment) => allotment.id !== id);
   }
 }
 

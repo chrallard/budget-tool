@@ -9,7 +9,7 @@ The MVP must use and preserve only these tabs:
 - `Income`
 - `Budget Targets`
 
-No additional user-facing tab is required. The importer may create a hidden `Skipped` tab that stores fingerprints of skipped and ignored transactions so a later import does not ask about them again.
+No additional user-facing tab is required. The importer may create a hidden `Skipped` tab that stores fingerprints of skipped and ignored transactions so a later import does not ask about them again. Allotments may create a hidden `Allotments` tab. See [allotments.md](allotments.md).
 
 ## Expenses Tab Contract
 
@@ -64,6 +64,8 @@ Rules:
 - Metadata values are not user-entered.
 - Metadata is required for duplicate detection and auditability.
 
+Expenses also have a hidden `Row Id`. The script assigns it when an expense is imported and backfills a blank id on existing expense rows, including manual ones. Allotments link to that id. See [allotments.md](allotments.md).
+
 ## Row Write Mapping
 
 ### Expense write mapping
@@ -80,6 +82,7 @@ Rules:
 - `Original Description` <- `originalDescription`
 - `Import Fingerprint` <- `importFingerprint`
 - `Imported At` <- backend write timestamp (ISO)
+- `Row Id` <- generated id for the expense row
 
 ### Income write mapping
 

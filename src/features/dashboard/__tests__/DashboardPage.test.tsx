@@ -12,8 +12,25 @@ afterEach(() => {
   cleanup();
 });
 
-function createStubDataSource(getDashboardData: (month: string) => Promise<DashboardData>): DashboardDataSource {
-  return { getDashboardData };
+function createStubDataSource(
+  getDashboardData: (month: string) => Promise<DashboardData>,
+  allotments?: Partial<Pick<DashboardDataSource, "getAllotments" | "saveAllotment" | "deleteAllotment">>,
+): DashboardDataSource {
+  return {
+    getDashboardData,
+    getAllotments: allotments?.getAllotments ?? (async () => []),
+    saveAllotment:
+      allotments?.saveAllotment ??
+      (async (draft) => ({
+        id: draft.id ?? "allotment-1",
+        profitMonth: draft.profitMonth,
+        name: draft.name,
+        amount: draft.amount,
+        category: draft.category,
+        expenseIds: draft.expenseIds ?? [],
+      })),
+    deleteAllotment: allotments?.deleteAllotment ?? (async () => {}),
+  };
 }
 
 function getCategoryCard(category: string): HTMLElement {
@@ -236,34 +253,9 @@ describe("DashboardPage", () => {
     await user.click(screen.getByRole("button", { name: "Retry" }));
 
     expect(await screen.findByRole("heading", { name: "Food" })).toBeInTheDocument();
-    expect(getDashboardData).toHaveBeenCalledTimes(3);
+    expect(getDashboardData).toHaveBeenCalledTimes(2);
     expect(getDashboardData).toHaveBeenNthCalledWith(1, month);
     expect(getDashboardData).toHaveBeenNthCalledWith(2, month);
-    expect(getDashboardData).toHaveBeenNthCalledWith(3, shiftMonth(month, -1));
-  });
-
-  it("shows last month's profit as money to work with", async () => {
-    const month = getCurrentMonth();
-    const prior = shiftMonth(month, -1);
-    const dataSource = createStubDataSource(async (requestedMonth) => ({
-      month: requestedMonth,
-      expenseCategories: ["Food"],
-      budgetTargets: [],
-      expenses:
-        requestedMonth === prior
-          ? [{ date: sheetDate(prior), category: "Food", amount: 800 }]
-          : [{ date: sheetDate(month), category: "Food", amount: 100 }],
-      income:
-        requestedMonth === prior
-          ? [{ date: sheetDate(prior), category: "Salary", amount: 5000 }]
-          : [{ date: sheetDate(month), category: "Salary", amount: 1000 }],
-    }));
-
-    render(<DashboardPage dataSource={dataSource} />);
-
-    const workingCapital = await screen.findByRole("region", { name: `${formatMonthLabel(prior)} profit` });
-    expect(workingCapital).toHaveTextContent("$4,200.00");
-    expect(workingCapital).toHaveTextContent("spending, investing, or paying down the mortgage");
   });
 
   it("shows over-budget state and no-budget-target state", async () => {
@@ -292,10 +284,8 @@ describe("DashboardPage", () => {
     const pets = screen.getByRole("heading", { name: "Pets" }).closest(".category-card");
     expect(pets).toHaveTextContent("No target");
     expect(pets).toHaveTextContent("$50.00");
-    expect(screen.getByRole("heading", { name: "Expected Spending" }).closest("article")).toHaveTextContent(
-      "$1,200.00",
-    );
-    expect(screen.getByRole("heading", { name: "Left in Plan" }).closest("article")).toHaveTextContent("-$250.00");
+    expect(screen.queryByRole("heading", { name: "Expected Spending" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Left in Plan" })).not.toBeInTheDocument();
   });
 
   it("applies mobile-safe overflow protection", async () => {

@@ -1,4 +1,5 @@
 import type {
+  Allotment,
   BudgetTarget,
   CategoryCardData,
   DashboardSummary,
@@ -16,6 +17,53 @@ export function previousMonth(month: string): string {
   const [year, monthNumber] = month.split("-").map(Number);
   const date = new Date(year, monthNumber - 2, 1);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export function meaningfulProfit(actualProfit: number, fundedByEarlierProfit: number): number {
+  return actualProfit + fundedByEarlierProfit;
+}
+
+export function stillFree(toWorkWith: number, allotments: Allotment[]): number {
+  const planned = allotments.reduce((sum, allotment) => sum + allotment.amount, 0);
+  return toWorkWith - planned;
+}
+
+export function linkedExpensesForMonth(
+  allotments: Allotment[],
+  expenses: ExpenseRow[],
+  spendingMonth: string,
+): ExpenseRow[] {
+  const expenseById = new Map(
+    expenses.filter((expense) => expense.id).map((expense) => [expense.id as string, expense]),
+  );
+  const seen = new Set<string>();
+  const linked: ExpenseRow[] = [];
+
+  for (const allotment of allotments) {
+    for (const expenseId of allotment.expenseIds) {
+      if (seen.has(expenseId)) {
+        continue;
+      }
+
+      const expense = expenseById.get(expenseId);
+      if (!expense || expense.category !== allotment.category) {
+        continue;
+      }
+
+      if (parseSheetDateToMonth(expense.date) !== spendingMonth) {
+        continue;
+      }
+
+      seen.add(expenseId);
+      linked.push(expense);
+    }
+  }
+
+  return linked;
+}
+
+export function fundedExpenseTotal(allotments: Allotment[], expenses: ExpenseRow[], spendingMonth: string): number {
+  return linkedExpensesForMonth(allotments, expenses, spendingMonth).reduce((sum, expense) => sum + expense.amount, 0);
 }
 
 export function calculateMonthProfit(month: string, expenses: ExpenseRow[], income: IncomeRow[]): number {
@@ -98,22 +146,75 @@ export function calculateDashboardSummary(
   month: string,
   expenses: ExpenseRow[],
   income: IncomeRow[],
-  cards: CategoryCardData[],
 ): DashboardSummary {
-  const expectedSpending = cards.reduce((sum, card) => sum + (card.budgetTarget ?? 0), 0);
   const totalSpending = filterExpensesByMonth(expenses, month).reduce((sum, row) => sum + row.amount, 0);
   const totalIncome = filterIncomeByMonth(income, month).reduce((sum, row) => sum + row.amount, 0);
-  const spendingLeft = expectedSpending - totalSpending;
   const profit = calculateMonthProfit(month, expenses, income);
 
   return {
     month,
-    expectedSpending,
-    spendingLeft,
     totalSpending,
     totalIncome,
     profit,
   };
+}
+
+export function calculateAllotmentSummary(
+  month: string,
+  expenses: ExpenseRow[],
+  income: IncomeRow[],
+  allotments: Allotment[],
+): DashboardSummary {
+  const actual = calculateDashboardSummary(month, expenses, income);
+  const funded = fundedExpenseTotal(allotments, expenses, month);
+  const totalSpending = actual.totalSpending - funded;
+
+  return {
+    month,
+    totalSpending,
+    totalIncome: actual.totalIncome,
+    profit: actual.totalIncome - totalSpending,
+  };
+}
+
+export function calculateAllotmentCategoryCards(
+  expenseCategories: string[],
+  budgetTargets: BudgetTarget[],
+  expenses: ExpenseRow[],
+  month: string,
+  allotments: Allotment[],
+): CategoryCardData[] {
+  const fundedByCategory = new Map<string, number>();
+  for (const expense of linkedExpensesForMonth(allotments, expenses, month)) {
+    fundedByCategory.set(expense.category, (fundedByCategory.get(expense.category) ?? 0) + expense.amount);
+  }
+
+  return calculateCategoryCards(expenseCategories, budgetTargets, expenses, month)
+    .map((card) => {
+      const funded = fundedByCategory.get(card.category) ?? 0;
+      if (funded === 0) {
+        return card;
+      }
+
+      const used = card.used - funded;
+      const remaining = card.budgetTarget === undefined ? undefined : card.budgetTarget - used;
+      const progressPct = card.budgetTarget && card.budgetTarget > 0 ? (used / card.budgetTarget) * 100 : undefined;
+
+      return {
+        ...card,
+        used,
+        remaining,
+        progressPct,
+        isOverBudget: remaining === undefined ? false : remaining < 0,
+      };
+    })
+    .sort((left, right) => {
+      if (right.used !== left.used) {
+        return right.used - left.used;
+      }
+
+      return left.category.localeCompare(right.category);
+    });
 }
 
 export function collectAvailableMonths(expenses: ExpenseRow[], income: IncomeRow[], fallbackMonth: string): string[] {

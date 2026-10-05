@@ -214,16 +214,50 @@ function writeApprovedTransaction_(tx, expensesSheet, incomeSheet, expensesHeade
   };
 
   if (tx.direction === "expense") {
+    var rowId = Utilities.getUuid();
+    var allotmentId = String(tx.allotmentId || "").trim();
     appendRowByHeaders_(expensesSheet, expensesHeaders, mergeObjects_(common, {
       "Store / Vendor": displayText,
-      "Expense Category": String(tx.selectedCategory).trim()
+      "Expense Category": String(tx.selectedCategory).trim(),
+      "Row Id": rowId
     }));
+    if (allotmentId) {
+      try {
+        linkImportedExpense_(
+          allotmentId,
+          rowId,
+          String(tx.selectedCategory).trim(),
+          monthFromMmDdYyyy_(common.Date)
+        );
+      } catch (linkError) {
+        deleteExpenseRowById_(expensesSheet, expensesHeaders, rowId);
+        throw linkError;
+      }
+    }
   } else {
     appendRowByHeaders_(incomeSheet, incomeHeaders, mergeObjects_(common, {
       Source: displayText,
       "Income Category": String(tx.selectedCategory).trim()
     }));
   }
+}
+
+function deleteExpenseRowById_(sheet, headerMap, rowId) {
+  var idCol = headerMap["Row Id"];
+  if (!idCol || !rowId) {
+    throw apiError_("SHEET_WRITE_ERROR", "Imported expense could not be linked, and the new row could not be removed.");
+  }
+
+  var lastRow = sheet.getLastRow();
+  var values = sheet.getRange(1, idCol, lastRow, 1).getValues();
+  for (var i = values.length - 1; i >= 0; i -= 1) {
+    if (String(values[i][0] || "").trim() === rowId) {
+      sheet.deleteRow(i + 1);
+      return;
+    }
+  }
+
+  throw apiError_("SHEET_WRITE_ERROR", "Imported expense could not be linked, and the new row could not be removed.");
 }
 
 function mergeObjects_(a, b) {

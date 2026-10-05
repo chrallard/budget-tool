@@ -154,6 +154,7 @@ Rules:
 - `progressPct = used / budgetTarget` when `budgetTarget > 0`.
 - Missing target is treated as no target, not a zero-budget failure.
 - Stored transaction dates use `MM-DD-YYYY` for sheet writes and dashboard filtering.
+- Actual profit on the dashboard is income minus expenses for the selected month. Meaningful profit and allotments are defined in [allotments.md](allotments.md).
 
 ## Import Batch Data Contract
 
@@ -172,6 +173,7 @@ export type ApprovedImportTransaction = {
   originalDescription: string;
   normalizedDescription: string;
   importFingerprint: string;
+  allotmentId?: string;
 };
 
 export type ImportBatch = {
@@ -179,7 +181,7 @@ export type ImportBatch = {
 };
 ```
 
-When an approved transaction has two or more `splits`, the batch contains one row per split. Each row keeps the parent date, description, original amount, and fingerprint, and uses that split's category and amount.
+When an approved transaction has two or more `splits`, the batch contains one row per split. Each row keeps the parent date, description, original amount, and fingerprint, and uses that split's category and amount. An expense row may include `allotmentId`. After the row is written, that id is added to the allotment when the category and spending month match. Each split carries its own id.
 
 ## Open Data-Model Decisions
 

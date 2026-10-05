@@ -36,6 +36,9 @@ function createDataSource(overrides: Partial<ImportDataSource> = {}): ImportData
         existingRecords: [],
       };
     },
+    async getAllotments() {
+      return [];
+    },
     async submitImportBatch(_request: PostImportBatchRequest): Promise<PostImportBatchResponse> {
       return {
         written: { expenses: 1, income: 0 },
@@ -395,6 +398,48 @@ describe("ImportPage", () => {
       expect.objectContaining({ selectedCategory: "Home", editableAmount: 15, originalAmount: -40 }),
     ]);
     expect(rows[0]?.importFingerprint).toBe(rows[1]?.importFingerprint);
+  });
+
+  it("links an approved expense to an allotment that funds that month", async () => {
+    const user = userEvent.setup();
+    const submitImportBatch = vi.fn(async (request: PostImportBatchRequest) => ({
+      written: { expenses: request.approvedTransactions.length, income: 0 },
+      skipped: 0,
+      ignored: 0,
+      failures: [],
+    }));
+    const getAllotments = vi.fn(async () => [
+      {
+        id: "allotment-food",
+        profitMonth: "2026-04",
+        name: "Groceries",
+        amount: 200,
+        category: "Food",
+        expenseIds: [],
+      },
+    ]);
+
+    render(
+      <ImportPage
+        dataSource={createDataSource({
+          submitImportBatch,
+          getAllotments,
+        })}
+      />,
+    );
+
+    const input = await screen.findByLabelText(/choose an rbc or td export/i);
+    const csv = csvWithRows(['CHEQUING,123,05/01/2026,,LOBLAWS 123,,"-10.00",']);
+    await user.upload(input, new File([csv], "linked.csv", { type: "text/csv" }));
+
+    expect(await screen.findByRole("combobox", { name: "Allotment" })).toBeInTheDocument();
+    expect(getAllotments).toHaveBeenCalledWith("2026-04");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Allotment" }), "allotment-food");
+    await user.click(screen.getByRole("button", { name: "Approve transaction" }));
+    await user.click(screen.getByRole("button", { name: /submit 1 approved transaction/i }));
+
+    await waitFor(() => expect(submitImportBatch).toHaveBeenCalledTimes(1));
+    expect(submitImportBatch.mock.calls[0]?.[0].approvedTransactions[0]?.allotmentId).toBe("allotment-food");
   });
 
   it("uploads a TD CSV and uses the same review flow", async () => {

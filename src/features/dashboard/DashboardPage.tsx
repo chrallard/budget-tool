@@ -6,12 +6,9 @@ import { SummaryCards } from "./SummaryCards";
 import {
   calculateCategoryCards,
   calculateDashboardSummary,
-  calculateMonthProfit,
   collectAvailableMonths,
   getCurrentMonth,
-  previousMonth,
 } from "./dashboardCalculations";
-import { WorkingCapital } from "./WorkingCapital";
 import {
   createDashboardDataSource,
   type DashboardDataSource,
@@ -40,18 +37,11 @@ export function DashboardPage({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
-  const [priorMonth, setPriorMonth] = useState<string>(() => previousMonth(getCurrentMonth()));
-  const [priorProfit, setPriorProfit] = useState<number | null>(null);
-  const [priorError, setPriorError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
-    const monthBefore = previousMonth(selectedMonth);
     setIsLoading(true);
     setError(null);
-    setPriorMonth(monthBefore);
-    setPriorProfit(null);
-    setPriorError(null);
 
     resolvedDataSource
       .getDashboardData(selectedMonth)
@@ -63,23 +53,6 @@ export function DashboardPage({
         setDashboardData(data);
         setLoadedMonth(selectedMonth);
         onDataLoaded?.(selectedMonth, data);
-
-        resolvedDataSource
-          .getDashboardData(monthBefore)
-          .then((priorData) => {
-            if (!active) {
-              return;
-            }
-
-            setPriorProfit(calculateMonthProfit(monthBefore, priorData.expenses, priorData.income));
-          })
-          .catch((priorErr: unknown) => {
-            if (!active) {
-              return;
-            }
-
-            setPriorError(priorErr instanceof Error ? priorErr.message : "Unable to load last month.");
-          });
       })
       .catch((err) => {
         if (!active) {
@@ -134,8 +107,8 @@ export function DashboardPage({
       return null;
     }
 
-    return calculateDashboardSummary(loadedMonth, dashboardData.expenses, dashboardData.income, cards);
-  }, [dashboardData, cards, loadedMonth]);
+    return calculateDashboardSummary(loadedMonth, dashboardData.expenses, dashboardData.income);
+  }, [dashboardData, loadedMonth]);
 
   const retryLoad = () => {
     setReloadToken((value) => value + 1);
@@ -168,7 +141,7 @@ export function DashboardPage({
     <main className="dashboard-page content-fade-in" style={{ overflowX: "hidden" }} aria-busy={isLoading}>
       <header className="dashboard-hero">
         <div>
-          <p className="dashboard-eyebrow">Budget Dashboard</p>
+          <p className="dashboard-eyebrow">Actual dashboard</p>
           <h1>{formatMonthLabel(loadedMonth)}</h1>
         </div>
         <div className="dashboard-hero__controls">
@@ -186,8 +159,6 @@ export function DashboardPage({
           </button>
         </section>
       ) : null}
-
-      <WorkingCapital month={priorMonth} profit={priorProfit} error={priorError} />
 
       <SummaryCards summary={summary} />
 

@@ -20,7 +20,7 @@ function routeRequest_(method, e) {
     if (!action) {
       return jsonError_(
         "BAD_REQUEST",
-        "Missing action. Allowed actions: config, dashboard, importFingerprints, importBatch.",
+        "Missing action. Allowed actions: config, dashboard, importFingerprints, importBatch, allotments, saveAllotment, deleteAllotment.",
         null,
         requestId
       );
@@ -51,10 +51,28 @@ function routeRequest_(method, e) {
         }
         return handleImportBatchAction_(e, requestId);
 
+      case APP_CONFIG.ACTIONS.ALLOTMENTS:
+        if (method !== "GET") {
+          return jsonError_("BAD_REQUEST", "Action allotments requires GET.", null, requestId);
+        }
+        return jsonSuccess_(handleAllotmentsAction_(e), requestId);
+
+      case APP_CONFIG.ACTIONS.SAVE_ALLOTMENT:
+        if (method !== "POST") {
+          return jsonError_("BAD_REQUEST", "Action saveAllotment requires POST.", null, requestId);
+        }
+        return jsonSuccess_(handleSaveAllotmentAction_(e), requestId);
+
+      case APP_CONFIG.ACTIONS.DELETE_ALLOTMENT:
+        if (method !== "POST") {
+          return jsonError_("BAD_REQUEST", "Action deleteAllotment requires POST.", null, requestId);
+        }
+        return jsonSuccess_(handleDeleteAllotmentAction_(e), requestId);
+
       default:
         return jsonError_(
           "NOT_FOUND",
-          "Unknown action: " + action + ". Allowed actions: config, dashboard, importFingerprints, importBatch.",
+          "Unknown action: " + action + ". Allowed actions: config, dashboard, importFingerprints, importBatch, allotments, saveAllotment, deleteAllotment.",
           null,
           requestId
         );

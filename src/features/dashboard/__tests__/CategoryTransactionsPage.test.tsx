@@ -9,7 +9,19 @@ afterEach(() => {
 });
 
 function createStubDataSource(getDashboardData: (month: string) => Promise<DashboardData>): DashboardDataSource {
-  return { getDashboardData };
+  return {
+    getDashboardData,
+    getAllotments: async () => [],
+    saveAllotment: async (draft) => ({
+      id: draft.id ?? "allotment-1",
+      profitMonth: draft.profitMonth,
+      name: draft.name,
+      amount: draft.amount,
+      category: draft.category,
+      expenseIds: draft.expenseIds ?? [],
+    }),
+    deleteAllotment: async () => {},
+  };
 }
 
 describe("CategoryTransactionsPage", () => {

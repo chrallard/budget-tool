@@ -1,4 +1,6 @@
+import type { ApiAllotment } from "../../api/client";
 import type { NormalizedTransaction, TransactionSplit } from "../../shared/types/transactions";
+import { AllotmentLinkField } from "./AllotmentLinkField";
 import { CategorySelector } from "./CategorySelector";
 import { getSplitRemaining } from "./reviewState";
 
@@ -6,8 +8,10 @@ type SplitEditorProps = {
   transaction: NormalizedTransaction;
   categories: string[];
   splits: TransactionSplit[];
+  allotments?: ApiAllotment[];
   onAmountChange: (splitId: string, amount: number) => void;
   onCategoryChange: (splitId: string, category: string) => void;
+  onAllotmentChange?: (splitId: string, allotmentId: string) => void;
   onAdd: () => void;
   onRemove: (splitId: string) => void;
   onClear: () => void;
@@ -21,8 +25,10 @@ export function SplitEditor({
   transaction,
   categories,
   splits,
+  allotments = [],
   onAmountChange,
   onCategoryChange,
+  onAllotmentChange,
   onAdd,
   onRemove,
   onClear,
@@ -63,6 +69,17 @@ export function SplitEditor({
             >
               Remove part {part}
             </button>
+            {transaction.direction === "expense" ? (
+              <AllotmentLinkField
+                layout="split"
+                allotments={allotments}
+                category={split.category}
+                displayDate={transaction.displayDate}
+                selectedId={split.allotmentId}
+                label={`Part ${part} allotment`}
+                onChange={(allotmentId) => onAllotmentChange?.(split.id, allotmentId)}
+              />
+            ) : null}
           </div>
         );
       })}

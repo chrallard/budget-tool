@@ -1,6 +1,7 @@
 import { getAccessKey } from "../../auth/accessKey";
 import {
   AppsScriptApiClient,
+  type ApiAllotment,
   type GetConfigResponse,
   type GetImportFingerprintsResponse,
   type PostImportBatchRequest,
@@ -16,6 +17,7 @@ export type ImportReviewContext = {
 
 export interface ImportDataSource {
   getImportReviewContext(): Promise<ImportReviewContext>;
+  getAllotments(profitMonth: string): Promise<ApiAllotment[]>;
   submitImportBatch(request: PostImportBatchRequest): Promise<PostImportBatchResponse>;
 }
 
@@ -55,6 +57,11 @@ export class AppsScriptImportDataSource implements ImportDataSource {
     };
   }
 
+  async getAllotments(profitMonth: string): Promise<ApiAllotment[]> {
+    const response = await this.client.getAllotments(profitMonth);
+    return response.allotments ?? [];
+  }
+
   async submitImportBatch(request: PostImportBatchRequest): Promise<PostImportBatchResponse> {
     return this.client.postImportBatch(request);
   }
@@ -75,6 +82,10 @@ export class MockImportDataSource implements ImportDataSource {
       existingRecords: [],
       skippedFingerprints: [],
     };
+  }
+
+  async getAllotments(): Promise<ApiAllotment[]> {
+    return [];
   }
 
   async submitImportBatch(request: PostImportBatchRequest): Promise<PostImportBatchResponse> {

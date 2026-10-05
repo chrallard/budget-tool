@@ -1,4 +1,6 @@
+import type { ApiAllotment } from "../../api/client";
 import type { IgnoreReason, NormalizedTransaction } from "../../shared/types/transactions";
+import { AllotmentLinkField } from "./AllotmentLinkField";
 import {
   canApproveTransaction,
   getActiveSplits,
@@ -15,7 +17,9 @@ import { SplitEditor } from "./SplitEditor";
 type TransactionReviewCardProps = {
   transaction: NormalizedTransaction;
   config: ReviewConfig;
+  allotments?: ApiAllotment[];
   onCategoryChange: (category: string) => void;
+  onAllotmentChange?: (allotmentId: string) => void;
   onAmountChange: (amount: number) => void;
   onDisplayNameOverrideChange: (value: string) => void;
   onNotesChange: (notes: string) => void;
@@ -25,6 +29,7 @@ type TransactionReviewCardProps = {
   onClearSplit: () => void;
   onSplitAmountChange: (splitId: string, amount: number) => void;
   onSplitCategoryChange: (splitId: string, category: string) => void;
+  onSplitAllotmentChange?: (splitId: string, allotmentId: string) => void;
   onApprove: () => void;
   onSkip: () => void;
   onIgnore: (reason: IgnoreReason) => void;
@@ -37,7 +42,9 @@ function formatDirection(direction: NormalizedTransaction["direction"]): string 
 export function TransactionReviewCard({
   transaction,
   config,
+  allotments = [],
   onCategoryChange,
+  onAllotmentChange,
   onAmountChange,
   onDisplayNameOverrideChange,
   onNotesChange,
@@ -47,6 +54,7 @@ export function TransactionReviewCard({
   onClearSplit,
   onSplitAmountChange,
   onSplitCategoryChange,
+  onSplitAllotmentChange,
   onApprove,
   onSkip,
   onIgnore,
@@ -124,8 +132,10 @@ export function TransactionReviewCard({
             transaction={transaction}
             categories={categories}
             splits={splits}
+            allotments={allotments}
             onAmountChange={onSplitAmountChange}
             onCategoryChange={onSplitCategoryChange}
+            onAllotmentChange={onSplitAllotmentChange}
             onAdd={onAddSplit}
             onRemove={onRemoveSplit}
             onClear={onClearSplit}
@@ -137,6 +147,15 @@ export function TransactionReviewCard({
               selectedCategory={transaction.selectedCategory}
               onChange={onCategoryChange}
             />
+            {transaction.direction === "expense" ? (
+              <AllotmentLinkField
+                allotments={allotments}
+                category={transaction.selectedCategory}
+                displayDate={transaction.displayDate}
+                selectedId={transaction.allotmentId}
+                onChange={(allotmentId) => onAllotmentChange?.(allotmentId)}
+              />
+            ) : null}
             <div className="review-field review-field--full">
               <button type="button" className="ghost-button" onClick={onStartSplit}>
                 Split across categories
