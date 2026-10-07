@@ -34,6 +34,7 @@ function createDataSource(overrides: Partial<ImportDataSource> = {}): ImportData
         expenseCategories: ["Food", "Food out", "Coffee out", "Other"],
         incomeCategories: ["Salary", "Other"],
         existingRecords: [],
+        skippedFingerprints: [],
       };
     },
     async getAllotments() {
@@ -61,6 +62,7 @@ describe("ImportPage", () => {
       expenseCategories: ["Food"],
       incomeCategories: ["Salary"],
       existingRecords: [],
+      skippedFingerprints: [],
     }));
 
     render(<ImportPage dataSource={createDataSource({ getImportReviewContext })} />);
@@ -123,6 +125,7 @@ describe("ImportPage", () => {
               expenseCategories: ["Food"],
               incomeCategories: ["Salary"],
               existingRecords: [],
+              skippedFingerprints: [],
             };
           },
         })}
@@ -217,6 +220,7 @@ describe("ImportPage", () => {
               expenseCategories: ["Transportation", "coffee out", "Food", "Bills"],
               incomeCategories: ["Salary", "Other"],
               existingRecords: [],
+              skippedFingerprints: [],
             };
           },
         })}
@@ -253,6 +257,7 @@ describe("ImportPage", () => {
                   importFingerprint: "different-fingerprint",
                 },
               ],
+              skippedFingerprints: [],
             };
           },
         })}
@@ -299,6 +304,7 @@ describe("ImportPage", () => {
                   importFingerprint: "different-fingerprint",
                 },
               ],
+              skippedFingerprints: [],
             };
           },
         })}
@@ -367,6 +373,7 @@ describe("ImportPage", () => {
               expenseCategories: ["Food", "Home"],
               incomeCategories: ["Salary"],
               existingRecords: [],
+              skippedFingerprints: [],
             };
           },
         })}
