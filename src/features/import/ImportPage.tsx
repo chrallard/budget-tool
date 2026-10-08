@@ -34,6 +34,7 @@ import {
   setTransactionCategory,
   setTransactionDisplayNameOverride,
   setTransactionNotes,
+  hasOutstandingDuplicates,
   skipTransaction,
   startTransactionSplit,
   startSubmission,
@@ -118,6 +119,16 @@ export function ImportPage({
 
   const counts = useMemo(() => (reviewState ? getReviewCounts(reviewState) : null), [reviewState]);
   const currentTransaction = useMemo(() => (reviewState ? getCurrentTransaction(reviewState) : null), [reviewState]);
+  const autoSkippedDuplicateCount = useMemo(() => {
+    if (!reviewState) {
+      return 0;
+    }
+
+    return reviewState.transactions.filter(
+      (transaction) =>
+        transaction.status === "skipped" && hasOutstandingDuplicates(transaction.duplicateStatus),
+    ).length;
+  }, [reviewState]);
 
   async function handleFileSelected(file: File) {
     setPageMessage(null);
@@ -310,6 +321,12 @@ export function ImportPage({
           {previouslySkippedCount > 0 ? (
             <p className="dashboard-muted">
               {previouslySkippedCount} previously skipped transaction{previouslySkippedCount === 1 ? "" : "s"} left out of this review. Reopen one below to import it.
+            </p>
+          ) : null}
+
+          {autoSkippedDuplicateCount > 0 ? (
+            <p className="dashboard-muted">
+              {autoSkippedDuplicateCount} duplicate transaction{autoSkippedDuplicateCount === 1 ? "" : "s"} skipped automatically. Reopen one below to import it.
             </p>
           ) : null}
 

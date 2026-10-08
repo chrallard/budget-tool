@@ -155,7 +155,9 @@ export function createImportReviewState(params: {
     sourceAccount: params.sourceAccount,
     transactions: params.transactions.map((transaction) => {
       const sanitized = sanitizeTransaction(transaction, params.config);
-      if (sanitized.status === "pending" && remembered.has(sanitized.importFingerprint)) {
+      const isRememberedSkip = remembered.has(sanitized.importFingerprint);
+      const isDetectedDuplicate = hasOutstandingDuplicates(sanitized.duplicateStatus);
+      if (sanitized.status === "pending" && (isRememberedSkip || isDetectedDuplicate)) {
         return {
           ...sanitized,
           status: "skipped" as const,

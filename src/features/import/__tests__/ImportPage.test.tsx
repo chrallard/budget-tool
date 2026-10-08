@@ -238,7 +238,7 @@ describe("ImportPage", () => {
     expect(optionLabels).toEqual(["Select a category", "Bills", "coffee out", "Food", "Transportation"]);
   });
 
-  it("shows duplicate warnings and can skip as duplicate", async () => {
+  it("skips a detected duplicate without a manual skip", async () => {
     const user = userEvent.setup();
     render(
       <ImportPage
@@ -270,9 +270,9 @@ describe("ImportPage", () => {
     ]);
     await user.upload(input, new File([csv], "duplicate.csv", { type: "text/csv" }));
 
-    expect(await screen.findByRole("heading", { name: "Possible duplicate" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Skip as duplicate" }));
     expect(await screen.findByText("Review complete")).toBeInTheDocument();
+    expect(screen.getByText(/1 duplicate transaction skipped automatically/)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Possible duplicate" })).not.toBeInTheDocument();
   });
 
   it("can import a possible duplicate anyway and submit approved rows only", async () => {
@@ -317,6 +317,9 @@ describe("ImportPage", () => {
       'CHEQUING,123,05/03/2026,,ACCOUNT TRANSFER SAVINGS,,"-25.00",',
     ]);
     await user.upload(input, new File([csv], "submit.csv", { type: "text/csv" }));
+
+    expect(await screen.findByText(/1 duplicate transaction skipped automatically/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Reopen" }));
 
     const storeVendorInput = await screen.findByLabelText("Store / Vendor");
     await user.clear(storeVendorInput);

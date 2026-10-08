@@ -378,6 +378,34 @@ describe("reviewState", () => {
     expect(payload.skippedFingerprints).toEqual([]);
   });
 
+  it("skips detected duplicates before review starts", () => {
+    const initial = createImportReviewState({
+      sourceAccount: "chequing",
+      fileName: "rbc.csv",
+      config: {
+        expenseCategories: ["Dining"],
+        incomeCategories: ["Salary"],
+      },
+      transactions: [
+        createTransaction({ id: "confirmed", duplicateStatus: "confirmed_duplicate" }),
+        createTransaction({
+          id: "possible",
+          duplicateStatus: "possible_duplicate",
+          importFingerprint: "chequing|2026-05-02|-8.00|GROCERY",
+        }),
+        createTransaction({
+          id: "fresh",
+          importFingerprint: "chequing|2026-05-03|-4.00|CAFE",
+        }),
+      ],
+    });
+
+    expect(initial.transactions[0]?.status).toBe("skipped");
+    expect(initial.transactions[1]?.status).toBe("skipped");
+    expect(getCurrentTransaction(initial)?.id).toBe("fresh");
+    expect(getReviewCounts(initial).skipped).toBe(2);
+  });
+
   it("includes an allotment id when the expense matches that plan", () => {
     const initial = createImportReviewState({
       sourceAccount: "chequing",
